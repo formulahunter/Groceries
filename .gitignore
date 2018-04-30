@@ -1,0 +1,5 @@
+//  Ignore WebStorm project directory
+.idea/*
+
+//  Ignore user data files
+*.xml
