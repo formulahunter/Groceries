@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>dev</title>
+
+    <script type="module">
+
+        window.field = null;
+        window.main = function() {
+            window.field = document.getElementById('sku');
+            addEventListeners();
+
+            fetchData();
+        };
+        function addEventListeners() {
+            window.field.addEventListener('focus', select, false);
+            window.field.addEventListener('keydown', suggest, false);
+            window.field.addEventListener('blur', populate, false);
+        }
+        function fetchData() {
+            let request = new XMLHttpRequest();
+            request.onreadystatechange = function() {
+                if(this.readyState === 4 && this.statusText === "OK") {
+                    populateHistory(parseXML(this.responseXML));
+                }
+            };
+
+            let now = new Date(0);
+            request.open("GET", "data.xml");
+            request.setRequestHeader("If-Modified-Since", now.toUTCString());
+            request.send();
+        }
+        function parseXML(data) {
+
+        }
+
+        function select() {
+            let range = document.createRange();
+            range.setStart(window.field.childNodes[0], 0);
+            range.setEnd(window.field.childNodes[0], window.field.textContent.length);
+            let sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+
+
+        let input = [];
+        function suggest(ev) {
+            console.log(ev);
+            //  Don't interfere with ctrl, shift, alt, tab, meta keys
+            if(ev.ctrlKey || ev.shiftKey || ev.altKey || ev.metaKey)
+                return false;
+
+            //  Don't interfere with tab key (advance to next input field)
+            if(ev.key.toLowerCase() === 'tab')
+                return false;
+
+            //  At this point, only numeric keys are accepted plus two special cases:
+            //   1) Backspace - remove the last character from the input array and reset the selection without searching index for new suggestion
+            //   2) Delete - Clear suggested text from input field and set cursor at the end of the manually typed input
+
+            //  Take full control of the keydown operation
+            ev.stopPropagation();
+            ev.preventDefault();
+
+            let filter = new RegExp('[0-9]');
+            if(filter.test(ev.key)) {
+                //  Add keyed digit to input array
+                input.push(ev.key);
+
+                //  Incrementally set index position
+                // let ind = [
+                //     {char: '0', matches: []},
+                //     {char: '0', matches: []},
+                //     {char: '0', matches: []},
+                //     {char: '5', matches: []},
+                //     {char: '4', matches: []},
+                //     {char: '9', matches: []}
+                // ]
+
+
+                //  Determine suggested SKU and populate input
+                field.textContent = input.join('') + '4175';
+            }
+            else if(ev.key.toLowerCase() === 'backspace') {
+                //  Pop last character off input array and adjust selection, but don't re-check index
+
+                //  If input is empty, do nothing
+                if(!this.value.length)
+                    return false;
+
+                //  Remove last digit from input array
+                input.pop();
+            }
+            else if(ev.key.toLowerCase() === 'delete') {
+                //  Leave input intact but clear suggested text and simply set cursor at end of input
+
+            }
+            else {
+                return false;
+            }
+
+            //  Reset selection based on contents of input array so that the suggested portion of the SKU is highlighted
+            let range = document.createRange();
+            range.setStart(window.field.childNodes[0], input.length);
+            range.setEnd(window.field.childNodes[0], window.field.textContent.length);
+
+            let sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+
+            return false;
+        }
+
+
+        function populate() {
+            //  This function will fill in other inputs based on the sku value when the sku field is blurred
+        }
+
+    </script>
+</head>
+<body onload="main()">
+
+<span id="sku" contenteditable="true">SKU</span>
+
+</body>
+</html>
