@@ -3,3 +3,11 @@
 
 //  Ignore user data files
 *.xml
+*.json
+
+//  Ignore Git message files
+message*.*
+
+//  Ignore images
+*.png
+*.gif
