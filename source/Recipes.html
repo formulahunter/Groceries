@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--
+
+        ## RECIPES
+        - Prep time, cook time
+        - Number of servings
+        - Ingredients
+            - quantities, units of measure, ingredient
+            - optionals
+            - alternatives/substitutes
+        - Instructions
+            - quantities account for # of servings desired
+        - save recipes, add ingredients to shopping list in multiples of whole recipe and modify quantities, substitute
+          or omit items arbitrarily
+        - schedule recipes for certain dates for meal planning (e.g. burrito bowls on Tuesday night, salad on Wednesday
+          night
+            - distinguish between cooking & eating
+            - prep & tasting notes for the recipe and for each preparation/serving
+
+    -->
+
+    <link type="text/css" rel="stylesheet" href="Recipes.css" />
+
+    <script type="text/javascript">
+
+        let weekdayNames = ['Sun', 'Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat'];
+        const BREAKFAST = 0, BRUNCH = 1, LUNCH = 2, SNACK = 3, DINNER = 4, WORKOUT = 5;
+
+        class Ingredient {
+            constructor(name, unit, qty) {
+                if(!name || name === '')
+                    console.log(`No name provided for new Ingredient instance`);
+                if(!unit || unit === '')
+                    console.log(`No unit provided for new Ingredient instance`);
+                if(!qty || typeof qty !== 'number')
+                    console.log(`No quantity provided for new Ingredient instance`);
+
+                this._name = name || '';
+                this._unit = unit || '';
+                this._qty = qty || false;
+            }
+
+            get name() {
+                return this._name;
+            }
+            get unit() {
+                return this._unit;
+            }
+            get qty() {
+                return this._qty;
+            }
+
+            set name(name) {
+                if(typeof name !== 'string' || name === '')
+                    console.log(`No value provided for Ingredient name`);
+
+                this._name = name;
+            }
+            set unit(unit) {
+                if(typeof unit !== 'string' || unit === '')
+                    console.log(`No value provided for Ingredient unit`);
+
+                this._unit = unit;
+            }
+            set qty(qty) {
+                if(typeof qty !== 'number')
+                    console.log(`No value provided for Ingredient quantity`);
+
+                this._qty = qty;
+            }
+
+            toString() {
+                return this.name;
+            }
+        }
+        class ElectiveIngredient extends Ingredient {
+            constructor(primary) {
+                super();
+
+                this.options = [primary];
+            }
+
+            get name() {
+                return this.options[0].name;
+            }
+            get unit() {
+                return this.options[0].unit;
+            }
+            get qty() {
+                return this.options[0].qty;
+            }
+
+            set name(name) {
+                if(typeof name !== 'string' || name === '')
+                    console.log(`No value provided for Ingredient name`);
+
+                this.options[0].name = name;
+            }
+            set unit(unit) {
+                if(typeof unit !== 'string' || unit === '')
+                    console.log(`No value provided for Ingredient unit`);
+
+                this.options[0]._unit = unit;
+            }
+            set qty(qty) {
+                if(typeof qty !== 'number')
+                    console.log(`No value provided for Ingredient quantity`);
+
+                this.options[0]._qty = qty;
+            }
+
+            addOption(ingd) {
+                if(!(ingd instanceof Ingredient))
+                    throw new TypeError('ElectiveIngredient options must be Ingredient instances');
+                if(ingd instanceof ElectiveIngredient)
+                    throw new TypeError('ElectiveIngredient options cannot be other ElectiveIngredient instances');
+
+                this.options.push(ingd);
+                return this.length;
+            }
+        }
+        class Recipe {
+            constructor(title) {
+                if(!title || title === '')
+                    throw new TypeError('Argument to `Recipe` constructor must be a non-empty string');
+
+                this.id = false;
+                this.title = title;
+                this.ingredients = [];
+                this.instructions = [];
+            }
+
+            addIngredient(ingd) {
+                if(!(ingd instanceof Ingredient))
+                    throw new TypeError(`Argument to addIngredient() must be an Ingredient instance -- received ${ingd}`);
+
+                if(this.ingredients.indexOf(ingd) >= 0)
+                    throw new Error(`Ingredient ${ingd} cannot be added twice to recipe ${this}`);
+                else if(this.ingredients.findIndex(a => a.name === ingd.name) >= 0)
+                    console.warn(`An ingredient with the name ${ingd} has already been added to recipe ${this}`);
+
+                this.ingredients.push(ingd);
+                return this.ingredients.length;
+            }
+            addInstruction(inst) {
+                if(typeof inst !== 'string')
+                    throw new TypeError(`Argument to addInstruction() must be an string -- received ${inst}`);
+
+                if(this.instructions.indexOf(inst) >= 0)
+                    throw new Error(`Instruction ${inst} cannot be added twice to recipe ${this}`);
+
+                this.instructions.push(inst);
+                return this.instructions.length;
+            }
+
+            toString() {
+                return this.title;
+            }
+            toJSON() {
+                //  `replacer()` is used to substitute certain values with other values to be serialized
+                //  Substitutions are entirely arbitrary
+                //  Here they are performed to ensure consistency in the data file while minimizing its size
+                let replacer = function (value) {
+                    if(value === undefined || value === null)
+                        return '';
+
+                    if(value === false)
+                        return 'false';
+
+                    return value;
+                };
+
+                let ingredients = [];
+                this.ingredients.forEach(val => ingredients.push(val.toJSON()));
+
+                let instructions = [];
+                this.instructions.forEach(val => instructions.push(val.toJSON()));
+
+                let jobj = {
+                    title: replacer(this.title),
+                    ingredients: ingredients,
+                    instructions: instructions
+                };
+
+                return jobj;
+            }
+        }
+        class Meal {
+            constructor(date, time, recipe) {
+                this.date = date;
+                this.time = time;
+                this.recipe = recipe;
+            }
+        }
+        class ShoppingList {
+            constructor() {
+
+            }
+        }
+
+
+        class RecipeIndex {
+            constructor() {
+                this.container = document.createElement('div');
+                this.container.className = 'index';
+
+                this.title = document.createElement('h2');
+                this.title.className = 'title';
+                this.title.innerHTML = 'Recipe Index';
+                this.container.appendChild(this.title);
+
+                this.table = document.createElement('table');
+                this.container.appendChild(this.table);
+
+                this.index = [];
+                this.sortFun = (a, b) => (a.title > b.title? 1 : -1);
+            }
+
+            addEntry(recipe) {
+                //  Check if recipe i already added and if so return its index
+                let ind = this.index.indexOf(recipe);
+                if(ind >= 0) {
+                    console.log(`${recipe} has already been added to the index - it will not be added again`);
+                    return ind;
+                }
+
+                ind = this.index.findIndex(a => a.title === recipe.title);
+                if(ind >= 0) {
+                    console.info(`Recipe title ${recipe.title} has multiple entries in the index`);
+                }
+
+                //  Add recipe to index array
+                this.index.push(recipe);
+
+                //  Sort the index and get the position of the new recipe
+                this.index.sort(this.sortFun);
+                ind = this.index.indexOf(recipe);
+
+                //  Create a new table row at the same position
+                let titleRow = this.table.insertRow(ind);
+
+                //  Add the recipe title to a cell in the title row
+                titleRow.insertCell(0).innerHTML = recipe.title;
+
+                //  Return the new recipe's position in the index array
+                return ind;
+            }
+
+            init() {
+                //  Fetch data from storage/server
+
+                //  Populate display
+            }
+        }
+
+        class MealPlan {
+            constructor() {
+                this.container = document.createElement('div');
+                this.container.className = 'meal-plan';
+
+                this.title = document.createElement('h2');
+                this.title.className = 'title';
+                this.container.appendChild(this.title);
+
+                this.table = document.createElement('table');
+                this.container.appendChild(this.table);
+
+                this.header = this.table.insertRow(0);
+                let weekdayNames = ['Sun', 'Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat'];
+                for(let i=0; i<7; i++) {
+                    let cell = this.header.insertCell(i);
+                    cell.innerHTML = `${weekdayNames[i]} - `;
+                    cell.className = 'header';
+                }
+
+                this.mealRows = [];
+                for(let i=0; i<6; i++) {
+                    this.mealRows[i] = this.table.insertRow(this.table.rows.length);
+                    this.mealRows[i].className = 'schedule';
+                    for (let j=0; j<7; j++)
+                        this.mealRows[i].insertCell(j);
+                }
+
+                this.week = false;
+                this.meals = [];
+            }
+
+            getMealPlanFor(week) {
+                //  Starting on date indicated, get all meals planned for next 7 days
+                let d = new Date(week);
+
+                //  `meals` is an array of 7 arrays -- one for each day of the week
+                let meals = [];
+                for(let i=0; i<7; i++) {
+                    meals.push(this.getMealsOn(d));
+                    d.setDate(d.getDate() + 1);
+                }
+
+                return meals;
+            }
+            getMealsOn(day) {
+                return this.meals.filter(m => (m.date.getFullYear() === day.getFullYear() && m.date.getMonth() === day.getMonth() && m.date.getDate() === day.getDate()));
+            }
+
+            setWeek(week) {
+                //  Set a new date `d` to midnight on the Sunday of the week in which the argument `week` falls
+                let d = new Date(week.getFullYear(), week.getMonth(), week.getDate() - week.getDay());
+                console.info(`Set calendar to display the week beginning ${d.toLocaleDateString()}`);
+
+                //  If the indicated week is already displayed, do nothing
+                if(d === this.week) {
+                    console.log(`The week of ${d.toLocaleDateString()} is already displayed on the calendar`);
+                    return false;
+                }
+
+                //  Reset the title to reflect the new week
+                this.title.innerHTML = `Meal Plan - Week of ${d.toLocaleDateString()}`;
+
+                //  Retain the calculated value of `d` for reference
+                this.week = new Date(d);
+
+                //  Retrieve meal plan for selected week
+                let meals = this.getMealPlanFor(d);
+                console.info(`There are ${meals.flat().length} meals planned for the week`);
+
+                //  Update data in table
+                for(let i=0; i<7; i++) {
+                    //  Add the date to the header row
+                    this.header.cells[i].innerHTML = `${weekdayNames[i]} ${d.getDate()}`;
+
+                    //  Clear previous recipes from the schedule
+                    for(let j=0; j<6; j++)
+                        for (let k=0; k<7; k++)
+                            this.mealRows[j].cells[k].innerHTML = '';
+
+                    //  Add new recipes to the schedule
+                    for(let j=0; j<meals[i].length; j++)
+                        this.addRecipe(meals[i][j]);
+
+                    //  Advance `d` by 1 day
+                    d.setDate(d.getDate() + 1);
+                }
+            }
+            advanceWeek(count = 1) {
+                let d = new Date(this.week.getTime() + count * 7*24*60*60*1000);
+                this.setWeek(d);
+            }
+
+            addRecipe(recipe, day, meal) {
+                let d = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+                if(d < this.week || d - 7*24*60*60*1000 > this.week) {
+                    console.log(`${d.toLocaleDateString()} is outside of current calendar date range`);
+                    return false;
+                }
+
+                console.info(`List ${recipe.title} on ${d.toLocaleDateString()}`);
+
+                let cell = this.mealRows[meal].cells[d.getDay()];
+                let event = cell.appendChild(document.createElement('div'));
+                event.className = 'meal';
+                event.innerHTML = recipe.title;
+
+                return event;
+            }
+
+            init(week) {
+                //  Fetch data from storage/server
+
+
+                //  Populate display
+                this.setWeek(week);
+            }
+        }
+
+    </script>
+
+    <script type="text/javascript">
+
+        function main() {
+            //  Define a content container
+            let container = document.createElement('div');
+            container.className = 'content';
+            document.body.appendChild(container);
+
+            //  Define the meal plan
+            window.calendar = new MealPlan();
+            container.appendChild(calendar.container);
+
+            //  Define the recipe index
+            window.index = new RecipeIndex();
+            container.appendChild(index.container);
+
+            //  Initialize the calendar and index
+            window.calendar.init(new Date());
+            window.index.init();
+
+            //  Demonstrate data display
+
+            let eggRadishesToast = new Recipe('Egg &amp; Radishes on Crisp Bread');
+            let spinachApricotSalad = new Recipe('Spinach Apricot Salad');
+            let spicyHoneyRoastedChickpeas = new Recipe('Spicy Honey-Roasted Chickpeas');
+
+            index.addEntry(eggRadishesToast);
+            index.addEntry(spinachApricotSalad);
+            index.addEntry(spicyHoneyRoastedChickpeas);
+
+            let plans = [{
+                date: new Date(2018, 10, 4),
+                snack: eggRadishesToast,
+                dinner: spinachApricotSalad,
+                workout: spicyHoneyRoastedChickpeas
+            },
+            ];
+
+            let sundayPlan = {
+                date: new Date(2018, 10, 4),
+                snack: eggRadishesToast,
+                dinner: spinachApricotSalad,
+                workout: spicyHoneyRoastedChickpeas
+            };
+
+            calendar.addRecipe(plans[0].snack, new Date(sundayPlan.date.setHours(15)), SNACK);
+            calendar.addRecipe(sundayPlan.dinner, new Date(sundayPlan.date.setHours(18)), DINNER);
+            calendar.addRecipe(sundayPlan.workout, new Date(sundayPlan.date.setHours(21)), WORKOUT);
+
+
+            let appleNutQuark = new Recipe('Apple &amp; Nut Quark');
+            let chickpeaGrapefruitSalad = new Recipe('Chickpea Grapefruit Salad');
+            let turkeyTomatoSlices = new Recipe('Turkey Breast Tomato Slices');
+            let avocadoCeviche = new Recipe('Avocado Ceviche');
+            let carrotCucumberShake = new Recipe('Carrot &amp; Cucumber Shake');
+
+            index.addEntry(appleNutQuark);
+            index.addEntry(chickpeaGrapefruitSalad);
+            index.addEntry(turkeyTomatoSlices);
+            index.addEntry(avocadoCeviche);
+            index.addEntry(carrotCucumberShake);
+
+            let mondayPlan = {
+                date: new Date(2018, 10, 5),
+                breakfast: eggRadishesToast,
+                brunch: appleNutQuark,
+                lunch: chickpeaGrapefruitSalad,
+                snack: turkeyTomatoSlices,
+                dinner: avocadoCeviche,
+                workout: carrotCucumberShake
+            };
+
+            calendar.addRecipe(mondayPlan.breakfast, new Date(mondayPlan.date.setHours(6)), BREAKFAST);
+            calendar.addRecipe(mondayPlan.brunch, new Date(mondayPlan.date.setHours(9)), BRUNCH);
+            calendar.addRecipe(mondayPlan.lunch, new Date(mondayPlan.date.setHours(12)), LUNCH);
+            calendar.addRecipe(mondayPlan.snack, new Date(mondayPlan.date.setHours(15)), SNACK);
+            calendar.addRecipe(mondayPlan.dinner, new Date(mondayPlan.date.setHours(18)), DINNER);
+            calendar.addRecipe(mondayPlan.workout, new Date(mondayPlan.date.setHours(21)), WORKOUT);
+
+
+            let snickersPorridge = new Recipe('Snickers Porridge');
+            let oatsBlackberryJam = new Recipe('Oats with Blackberry Jam');
+            let cauliflowerCurry = new Recipe('Cauliflower Curry');
+            let chaoticSalmon = new Recipe('Chaotic Salmon');
+            let chickenSate = new Recipe('Chicken Sat&eacute;');
+            let cucumberCottageCheeseSandwiches = new Recipe('Cucumber Cottage Cheese Sandwiches');
+
+            index.addEntry(snickersPorridge);
+            index.addEntry(oatsBlackberryJam);
+            index.addEntry(cauliflowerCurry);
+            index.addEntry(chaoticSalmon);
+            index.addEntry(chickenSate);
+            index.addEntry(cucumberCottageCheeseSandwiches);
+
+            let tuesdayPlan = {
+                date: new Date(2018, 10, 6),
+                breakfast: snickersPorridge,
+                brunch: oatsBlackberryJam,
+                lunch: cauliflowerCurry,
+                snack: chaoticSalmon,
+                dinner: chickenSate,
+                workout: cucumberCottageCheeseSandwiches
+            };
+
+            calendar.addRecipe(tuesdayPlan.breakfast, new Date(tuesdayPlan.date.setHours(6)), BREAKFAST);
+            calendar.addRecipe(tuesdayPlan.brunch, new Date(tuesdayPlan.date.setHours(9)), BRUNCH);
+            calendar.addRecipe(tuesdayPlan.lunch, new Date(tuesdayPlan.date.setHours(12)), LUNCH);
+            calendar.addRecipe(tuesdayPlan.snack, new Date(tuesdayPlan.date.setHours(15)), SNACK);
+            calendar.addRecipe(tuesdayPlan.dinner, new Date(tuesdayPlan.date.setHours(18)), DINNER);
+            calendar.addRecipe(tuesdayPlan.workout, new Date(tuesdayPlan.date.setHours(21)), WORKOUT);
+
+
+            let friedSpinachCottageCheese = new Recipe('Fried Spinach with Cottage Cheese');
+            let appleAlmondButterSnack = new Recipe('Sliced Apple &amp; Almond Butter');
+            let cauliflowerRiceTofu = new Recipe('Cauliflower Rice wth Tofu');
+            let crispMozzarellaSlices = new Recipe('Crisp Mozzarella Slices');
+            let roastedQuinoaButternutSalad = new Recipe('Roasted Quinoa Butternut Salad');
+
+            index.addEntry(friedSpinachCottageCheese);
+            index.addEntry(appleAlmondButterSnack);
+            index.addEntry(cauliflowerRiceTofu);
+            index.addEntry(crispMozzarellaSlices);
+            index.addEntry(roastedQuinoaButternutSalad);
+
+            let wednesdayPlan = {
+                date: new Date(2018, 10, 7),
+                breakfast: friedSpinachCottageCheese,
+                brunch: appleAlmondButterSnack,
+                lunch: cauliflowerRiceTofu,
+                snack: crispMozzarellaSlices,
+                dinner: roastedQuinoaButternutSalad,
+                workout: carrotCucumberShake
+            };
+
+            calendar.addRecipe(wednesdayPlan.breakfast, new Date(wednesdayPlan.date.setHours(6)), BREAKFAST);
+            calendar.addRecipe(wednesdayPlan.brunch, new Date(wednesdayPlan.date.setHours(9)), BRUNCH);
+            calendar.addRecipe(wednesdayPlan.lunch, new Date(wednesdayPlan.date.setHours(12)), LUNCH);
+            calendar.addRecipe(wednesdayPlan.snack, new Date(wednesdayPlan.date.setHours(15)), SNACK);
+            calendar.addRecipe(wednesdayPlan.dinner, new Date(wednesdayPlan.date.setHours(18)), DINNER);
+            calendar.addRecipe(wednesdayPlan.workout, new Date(wednesdayPlan.date.setHours(21)), WORKOUT);
+
+
+            let scrambledEggBreadChives = new Recipe('Scrambled Egg on Bread with Chives');
+            let beetrootCarpaccio = new Recipe('Beetroot Carpaccio');
+            let applePeanutButter = new Recipe('Apple & Peanut Butter');
+            let quinoaSaladPrawns = new Recipe('Quinoa Salad with Prawns');
+            let bananaQuark = new Recipe('Banana Quark');
+
+            index.addEntry(scrambledEggBreadChives);
+            index.addEntry(beetrootCarpaccio);
+            index.addEntry(applePeanutButter);
+            index.addEntry(quinoaSaladPrawns);
+            index.addEntry(bananaQuark);
+
+            let thursdayPlan = {
+                date: new Date(2018, 10, 8),
+                breakfast: scrambledEggBreadChives,
+                brunch: oatsBlackberryJam,
+                lunch: beetrootCarpaccio,
+                snack: applePeanutButter,
+                dinner: quinoaSaladPrawns,
+                workout: bananaQuark
+            };
+
+            calendar.addRecipe(thursdayPlan.breakfast, new Date(thursdayPlan.date.setHours(6)), BREAKFAST);
+            calendar.addRecipe(thursdayPlan.brunch, new Date(thursdayPlan.date.setHours(9)), BRUNCH);
+            calendar.addRecipe(thursdayPlan.lunch, new Date(thursdayPlan.date.setHours(12)), LUNCH);
+            calendar.addRecipe(thursdayPlan.snack, new Date(thursdayPlan.date.setHours(15)), SNACK);
+            calendar.addRecipe(thursdayPlan.dinner, new Date(thursdayPlan.date.setHours(18)), DINNER);
+            calendar.addRecipe(thursdayPlan.workout, new Date(thursdayPlan.date.setHours(21)), WORKOUT);
+
+
+            let chocolateMintLatte = new Recipe('Chocolate Mint Latte');
+            let kiwiVanillaOats = new Recipe('Kiwi Vanilla Oats');
+            let chickenQuinoaBowlBeetrootHummus = new Recipe('Chicken Quinoa Bowl with Beetroot Hummus');
+            let tofuTomatoSlices = new Recipe('Tofu Tomato Slices');
+            let savryPorridgeSunnyEgg = new Recipe('Savory Porridge with Sunny Egg');
+            let mangoLassi = new Recipe('Mango Lassi');
+
+            index.addEntry(chocolateMintLatte);
+            index.addEntry(kiwiVanillaOats);
+            index.addEntry(chickenQuinoaBowlBeetrootHummus);
+            index.addEntry(tofuTomatoSlices);
+            index.addEntry(savryPorridgeSunnyEgg);
+            index.addEntry(mangoLassi);
+
+            let fridayPlan = {
+                date: new Date(2018, 10, 9),
+                breakfast: chocolateMintLatte,
+                brunch: kiwiVanillaOats,
+                lunch: chickenQuinoaBowlBeetrootHummus,
+                snack: tofuTomatoSlices,
+                dinner: savryPorridgeSunnyEgg,
+                workout: mangoLassi
+            };
+
+            calendar.addRecipe(fridayPlan.breakfast, new Date(fridayPlan.date.setHours(6)), BREAKFAST);
+            calendar.addRecipe(fridayPlan.brunch, new Date(fridayPlan.date.setHours(9)), BRUNCH);
+            calendar.addRecipe(fridayPlan.lunch, new Date(fridayPlan.date.setHours(12)), LUNCH);
+            calendar.addRecipe(fridayPlan.snack, new Date(fridayPlan.date.setHours(15)), SNACK);
+            calendar.addRecipe(fridayPlan.dinner, new Date(fridayPlan.date.setHours(18)), DINNER);
+            calendar.addRecipe(fridayPlan.workout, new Date(fridayPlan.date.setHours(21)), WORKOUT);
+
+
+            let onePotChickenKorma = new Recipe('One Pot Chicken Korma');
+            let bircherMuesli = new Recipe('Bircher Muesli');
+            let friedFishCurriedSpinach = new Recipe('Fried Fish with Curried Spinach');
+
+            index.addEntry(onePotChickenKorma);
+            index.addEntry(bircherMuesli);
+            index.addEntry(friedFishCurriedSpinach);
+
+            let saturdayPlan = {
+                date: new Date(2018, 10, 10),
+                breakfast: oatsBlackberryJam,
+                brunch: appleNutQuark,
+                lunch: onePotChickenKorma,
+                snack: bircherMuesli,
+                dinner: friedFishCurriedSpinach,
+                workout: null
+            };
+
+            calendar.addRecipe(saturdayPlan.breakfast, new Date(saturdayPlan.date.setHours(6)), BREAKFAST);
+            calendar.addRecipe(saturdayPlan.brunch, new Date(saturdayPlan.date.setHours(9)), BRUNCH);
+            calendar.addRecipe(saturdayPlan.lunch, new Date(saturdayPlan.date.setHours(12)), LUNCH);
+            calendar.addRecipe(saturdayPlan.snack, new Date(saturdayPlan.date.setHours(15)), SNACK);
+            calendar.addRecipe(saturdayPlan.dinner, new Date(saturdayPlan.date.setHours(18)), DINNER);
+//            calendar.addRecipe(saturdayPlan.workout, new Date(saturdayPlan.date.setHours(21)), WORKOUT);
+
+
+            let cinnamonBananaShake = new Recipe('Cinnamon Banana Shake');
+            let quickZucchiniParmesanHash = new Recipe('Quick Zucchini &amp; Parmesan Hash');
+            let whiteBeanSoupSmokedTofu = new Recipe('White Bean Soup with Smoked Tofu');
+
+            index.addEntry(cinnamonBananaShake);
+            index.addEntry(quickZucchiniParmesanHash);
+            index.addEntry(whiteBeanSoupSmokedTofu);
+
+            sundayPlan = {
+                date: new Date(2018, 10, 11),
+                breakfast: snickersPorridge,
+                brunch: cinnamonBananaShake,
+                lunch: chaoticSalmon,
+                snack: quickZucchiniParmesanHash,
+                dinner: whiteBeanSoupSmokedTofu,
+                workout: null
+            };
+
+            calendar.addRecipe(sundayPlan.breakfast, new Date(sundayPlan.date.setHours(6)), BREAKFAST);
+            calendar.addRecipe(sundayPlan.brunch, new Date(sundayPlan.date.setHours(9)), BRUNCH);
+            calendar.addRecipe(sundayPlan.lunch, new Date(sundayPlan.date.setHours(12)), LUNCH);
+            calendar.addRecipe(sundayPlan.snack, new Date(sundayPlan.date.setHours(15)), SNACK);
+            calendar.addRecipe(sundayPlan.dinner, new Date(sundayPlan.date.setHours(18)), DINNER);
+//            calendar.addRecipe(sundayPlan.workout, new Date(sundayPlan.date.setHours(21)), WORKOUT);
+
+            let d = new Date(2018, 10, 4);
+            let end = new Date(2018, 10, 19);
+            for(let i=0; i<plans.length; i++) {
+
+
+                if(plans[i].breakfast) {
+                    d.setHours(6);
+                    calendar.addRecipe(plans[i].breakfast, new Date(d), BREAKFAST);
+                }
+
+                calendar.addRecipe(mondayPlan.brunch, new Date(mondayPlan.date.setHours(9)), BRUNCH);
+                calendar.addRecipe(mondayPlan.lunch, new Date(mondayPlan.date.setHours(12)), LUNCH);
+                calendar.addRecipe(mondayPlan.snack, new Date(mondayPlan.date.setHours(15)), SNACK);
+                calendar.addRecipe(mondayPlan.dinner, new Date(mondayPlan.date.setHours(18)), DINNER);
+                calendar.addRecipe(mondayPlan.workout, new Date(mondayPlan.date.setHours(21)), WORKOUT);
+                d.setDate(d.getDate() + 1);
+            }
+        }
+
+    </script>
+
+
+    <meta charset="UTF-8">
+    <title>Recipes</title>
+</head>
+<body onload="main()">
+
+</body>
+</html>

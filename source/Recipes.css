@@ -1,0 +1,57 @@
+.content {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-flow: row wrap;
+    flex-flow: row wrap;
+}
+
+.index, .meal-plan {
+    width: 100%;
+}
+
+.index table, .meal-plan table {
+    width: 100%;
+}
+
+.meal-plan table {
+    table-layout: fixed;
+}
+
+.meal-plan table td.header {
+    width: 14%;
+}
+
+.meal-plan table td {
+    font-size: 8pt;
+    border-width: 1px 0 0 1px;
+    border-color: black;
+    border-style: solid;
+    vertical-align: top;
+}
+
+
+.meal-plan table tr.schedule {
+    height: 2em;
+}
+.meal-plan table tr.schedule td div {
+    width: 100%;
+    height: 6em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+@media (min-width: 800px) {
+    .meal-plan table td {
+        font-size: 12pt;
+    }
+}
+
+@media (min-width: 650px) {
+    .index {
+        width: 30%;
+    }
+    .meal-plan {
+        width: 60%;
+    }
+}
