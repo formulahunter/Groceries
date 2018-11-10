@@ -2,8 +2,7 @@
 .idea/*
 
 //  Ignore user data files
-*.xml
-*.json
+data/*
 
 //  Ignore Git message files
 message*.*
