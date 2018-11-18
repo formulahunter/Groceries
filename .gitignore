@@ -6,6 +6,7 @@ data/*
 
 //  Ignore Git message files
 message*.*
+commit-message.md
 
 //  Ignore images
 *.png
