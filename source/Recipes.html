@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!--
@@ -35,7 +36,7 @@
             constructor(name, unit, qty) {
                 if(!name || name === '')
                     console.log(`No name provided for new Ingredient instance`);
-                if(!unit || unit === '')
+                if(!unit && unit !== '')
                     console.log(`No unit provided for new Ingredient instance`);
                 if(!qty || typeof qty !== 'number')
                     console.log(`No quantity provided for new Ingredient instance`);
@@ -246,6 +247,7 @@
 
                 //  Add the recipe title to a cell in the title row
                 titleRow.insertCell(0).innerHTML = recipe.title;
+                titleRow.cells[0].className = "recipe";
 
                 //  Return the new recipe's position in the index array
                 return ind;
@@ -353,7 +355,7 @@
 
             addRecipe(recipe, day, meal) {
                 let d = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-                if(d < this.week || d - 7*24*60*60*1000 > this.week) {
+                if(d < this.week || d - 7*24*60*60*1000 >= this.week) {
                     console.log(`${d.toLocaleDateString()} is outside of current calendar date range`);
                     return false;
                 }
@@ -401,47 +403,27 @@
 
             //  Demonstrate data display
 
+            //  Sunday 11/4
             let eggRadishesToast = new Recipe('Egg &amp; Radishes on Crisp Bread');
             let spinachApricotSalad = new Recipe('Spinach Apricot Salad');
             let spicyHoneyRoastedChickpeas = new Recipe('Spicy Honey-Roasted Chickpeas');
-
-            index.addEntry(eggRadishesToast);
-            index.addEntry(spinachApricotSalad);
-            index.addEntry(spicyHoneyRoastedChickpeas);
 
             let plans = [{
                 date: new Date(2018, 10, 4),
                 snack: eggRadishesToast,
                 dinner: spinachApricotSalad,
                 workout: spicyHoneyRoastedChickpeas
-            },
-            ];
-
-            let sundayPlan = {
-                date: new Date(2018, 10, 4),
-                snack: eggRadishesToast,
-                dinner: spinachApricotSalad,
-                workout: spicyHoneyRoastedChickpeas
-            };
-
-            calendar.addRecipe(plans[0].snack, new Date(sundayPlan.date.setHours(15)), SNACK);
-            calendar.addRecipe(sundayPlan.dinner, new Date(sundayPlan.date.setHours(18)), DINNER);
-            calendar.addRecipe(sundayPlan.workout, new Date(sundayPlan.date.setHours(21)), WORKOUT);
+            }];
 
 
+            //  Monday 11/5
             let appleNutQuark = new Recipe('Apple &amp; Nut Quark');
             let chickpeaGrapefruitSalad = new Recipe('Chickpea Grapefruit Salad');
             let turkeyTomatoSlices = new Recipe('Turkey Breast Tomato Slices');
             let avocadoCeviche = new Recipe('Avocado Ceviche');
             let carrotCucumberShake = new Recipe('Carrot &amp; Cucumber Shake');
 
-            index.addEntry(appleNutQuark);
-            index.addEntry(chickpeaGrapefruitSalad);
-            index.addEntry(turkeyTomatoSlices);
-            index.addEntry(avocadoCeviche);
-            index.addEntry(carrotCucumberShake);
-
-            let mondayPlan = {
+            plans.push({
                 date: new Date(2018, 10, 5),
                 breakfast: eggRadishesToast,
                 brunch: appleNutQuark,
@@ -449,16 +431,10 @@
                 snack: turkeyTomatoSlices,
                 dinner: avocadoCeviche,
                 workout: carrotCucumberShake
-            };
-
-            calendar.addRecipe(mondayPlan.breakfast, new Date(mondayPlan.date.setHours(6)), BREAKFAST);
-            calendar.addRecipe(mondayPlan.brunch, new Date(mondayPlan.date.setHours(9)), BRUNCH);
-            calendar.addRecipe(mondayPlan.lunch, new Date(mondayPlan.date.setHours(12)), LUNCH);
-            calendar.addRecipe(mondayPlan.snack, new Date(mondayPlan.date.setHours(15)), SNACK);
-            calendar.addRecipe(mondayPlan.dinner, new Date(mondayPlan.date.setHours(18)), DINNER);
-            calendar.addRecipe(mondayPlan.workout, new Date(mondayPlan.date.setHours(21)), WORKOUT);
+            });
 
 
+            //  Tuesday 11/6
             let snickersPorridge = new Recipe('Snickers Porridge');
             let oatsBlackberryJam = new Recipe('Oats with Blackberry Jam');
             let cauliflowerCurry = new Recipe('Cauliflower Curry');
@@ -466,14 +442,7 @@
             let chickenSate = new Recipe('Chicken Sat&eacute;');
             let cucumberCottageCheeseSandwiches = new Recipe('Cucumber Cottage Cheese Sandwiches');
 
-            index.addEntry(snickersPorridge);
-            index.addEntry(oatsBlackberryJam);
-            index.addEntry(cauliflowerCurry);
-            index.addEntry(chaoticSalmon);
-            index.addEntry(chickenSate);
-            index.addEntry(cucumberCottageCheeseSandwiches);
-
-            let tuesdayPlan = {
+            plans.push({
                 date: new Date(2018, 10, 6),
                 breakfast: snickersPorridge,
                 brunch: oatsBlackberryJam,
@@ -481,29 +450,21 @@
                 snack: chaoticSalmon,
                 dinner: chickenSate,
                 workout: cucumberCottageCheeseSandwiches
-            };
-
-            calendar.addRecipe(tuesdayPlan.breakfast, new Date(tuesdayPlan.date.setHours(6)), BREAKFAST);
-            calendar.addRecipe(tuesdayPlan.brunch, new Date(tuesdayPlan.date.setHours(9)), BRUNCH);
-            calendar.addRecipe(tuesdayPlan.lunch, new Date(tuesdayPlan.date.setHours(12)), LUNCH);
-            calendar.addRecipe(tuesdayPlan.snack, new Date(tuesdayPlan.date.setHours(15)), SNACK);
-            calendar.addRecipe(tuesdayPlan.dinner, new Date(tuesdayPlan.date.setHours(18)), DINNER);
-            calendar.addRecipe(tuesdayPlan.workout, new Date(tuesdayPlan.date.setHours(21)), WORKOUT);
+            });
 
 
+            //  Wednesday 11/7
             let friedSpinachCottageCheese = new Recipe('Fried Spinach with Cottage Cheese');
             let appleAlmondButterSnack = new Recipe('Sliced Apple &amp; Almond Butter');
             let cauliflowerRiceTofu = new Recipe('Cauliflower Rice wth Tofu');
             let crispMozzarellaSlices = new Recipe('Crisp Mozzarella Slices');
+            crispMozzarellaSlices.addIngredient(new Ingredient('crisp (whole-grain) bread', 'slices', 7));
+            crispMozzarellaSlices.addIngredient(new Ingredient('low-fat mozzarella', 'oz', 4.33));
+            crispMozzarellaSlices.addIngredient(new Ingredient('alfalfa sprouts', 'oz', 1.33));
+
             let roastedQuinoaButternutSalad = new Recipe('Roasted Quinoa Butternut Salad');
 
-            index.addEntry(friedSpinachCottageCheese);
-            index.addEntry(appleAlmondButterSnack);
-            index.addEntry(cauliflowerRiceTofu);
-            index.addEntry(crispMozzarellaSlices);
-            index.addEntry(roastedQuinoaButternutSalad);
-
-            let wednesdayPlan = {
+            plans.push({
                 date: new Date(2018, 10, 7),
                 breakfast: friedSpinachCottageCheese,
                 brunch: appleAlmondButterSnack,
@@ -511,29 +472,17 @@
                 snack: crispMozzarellaSlices,
                 dinner: roastedQuinoaButternutSalad,
                 workout: carrotCucumberShake
-            };
-
-            calendar.addRecipe(wednesdayPlan.breakfast, new Date(wednesdayPlan.date.setHours(6)), BREAKFAST);
-            calendar.addRecipe(wednesdayPlan.brunch, new Date(wednesdayPlan.date.setHours(9)), BRUNCH);
-            calendar.addRecipe(wednesdayPlan.lunch, new Date(wednesdayPlan.date.setHours(12)), LUNCH);
-            calendar.addRecipe(wednesdayPlan.snack, new Date(wednesdayPlan.date.setHours(15)), SNACK);
-            calendar.addRecipe(wednesdayPlan.dinner, new Date(wednesdayPlan.date.setHours(18)), DINNER);
-            calendar.addRecipe(wednesdayPlan.workout, new Date(wednesdayPlan.date.setHours(21)), WORKOUT);
+            });
 
 
+            //  Thursday 11/8
             let scrambledEggBreadChives = new Recipe('Scrambled Egg on Bread with Chives');
             let beetrootCarpaccio = new Recipe('Beetroot Carpaccio');
             let applePeanutButter = new Recipe('Apple & Peanut Butter');
             let quinoaSaladPrawns = new Recipe('Quinoa Salad with Prawns');
             let bananaQuark = new Recipe('Banana Quark');
 
-            index.addEntry(scrambledEggBreadChives);
-            index.addEntry(beetrootCarpaccio);
-            index.addEntry(applePeanutButter);
-            index.addEntry(quinoaSaladPrawns);
-            index.addEntry(bananaQuark);
-
-            let thursdayPlan = {
+            plans.push({
                 date: new Date(2018, 10, 8),
                 breakfast: scrambledEggBreadChives,
                 brunch: oatsBlackberryJam,
@@ -541,31 +490,23 @@
                 snack: applePeanutButter,
                 dinner: quinoaSaladPrawns,
                 workout: bananaQuark
-            };
-
-            calendar.addRecipe(thursdayPlan.breakfast, new Date(thursdayPlan.date.setHours(6)), BREAKFAST);
-            calendar.addRecipe(thursdayPlan.brunch, new Date(thursdayPlan.date.setHours(9)), BRUNCH);
-            calendar.addRecipe(thursdayPlan.lunch, new Date(thursdayPlan.date.setHours(12)), LUNCH);
-            calendar.addRecipe(thursdayPlan.snack, new Date(thursdayPlan.date.setHours(15)), SNACK);
-            calendar.addRecipe(thursdayPlan.dinner, new Date(thursdayPlan.date.setHours(18)), DINNER);
-            calendar.addRecipe(thursdayPlan.workout, new Date(thursdayPlan.date.setHours(21)), WORKOUT);
+            });
 
 
+            //  Friday 11/9
             let chocolateMintLatte = new Recipe('Chocolate Mint Latte');
             let kiwiVanillaOats = new Recipe('Kiwi Vanilla Oats');
             let chickenQuinoaBowlBeetrootHummus = new Recipe('Chicken Quinoa Bowl with Beetroot Hummus');
             let tofuTomatoSlices = new Recipe('Tofu Tomato Slices');
+            tofuTomatoSlices.addIngredient(new Ingredient('crisp whole-grain bread', 'slices', 4));
+            tofuTomatoSlices.addIngredient(new Ingredient('smoked tofu', 'oz', 3.5));
+            tofuTomatoSlices.addIngredient(new Ingredient('tomato', '', 1));
+            tofuTomatoSlices.addIngredient(new Ingredient('fresh basil', 'leaves', 8));
+
             let savryPorridgeSunnyEgg = new Recipe('Savory Porridge with Sunny Egg');
             let mangoLassi = new Recipe('Mango Lassi');
 
-            index.addEntry(chocolateMintLatte);
-            index.addEntry(kiwiVanillaOats);
-            index.addEntry(chickenQuinoaBowlBeetrootHummus);
-            index.addEntry(tofuTomatoSlices);
-            index.addEntry(savryPorridgeSunnyEgg);
-            index.addEntry(mangoLassi);
-
-            let fridayPlan = {
+            plans.push({
                 date: new Date(2018, 10, 9),
                 breakfast: chocolateMintLatte,
                 brunch: kiwiVanillaOats,
@@ -573,25 +514,15 @@
                 snack: tofuTomatoSlices,
                 dinner: savryPorridgeSunnyEgg,
                 workout: mangoLassi
-            };
-
-            calendar.addRecipe(fridayPlan.breakfast, new Date(fridayPlan.date.setHours(6)), BREAKFAST);
-            calendar.addRecipe(fridayPlan.brunch, new Date(fridayPlan.date.setHours(9)), BRUNCH);
-            calendar.addRecipe(fridayPlan.lunch, new Date(fridayPlan.date.setHours(12)), LUNCH);
-            calendar.addRecipe(fridayPlan.snack, new Date(fridayPlan.date.setHours(15)), SNACK);
-            calendar.addRecipe(fridayPlan.dinner, new Date(fridayPlan.date.setHours(18)), DINNER);
-            calendar.addRecipe(fridayPlan.workout, new Date(fridayPlan.date.setHours(21)), WORKOUT);
+            });
 
 
+            //  Saturday 11/10
             let onePotChickenKorma = new Recipe('One Pot Chicken Korma');
             let bircherMuesli = new Recipe('Bircher Muesli');
             let friedFishCurriedSpinach = new Recipe('Fried Fish with Curried Spinach');
 
-            index.addEntry(onePotChickenKorma);
-            index.addEntry(bircherMuesli);
-            index.addEntry(friedFishCurriedSpinach);
-
-            let saturdayPlan = {
+            plans.push({
                 date: new Date(2018, 10, 10),
                 breakfast: oatsBlackberryJam,
                 brunch: appleNutQuark,
@@ -599,25 +530,30 @@
                 snack: bircherMuesli,
                 dinner: friedFishCurriedSpinach,
                 workout: null
-            };
-
-            calendar.addRecipe(saturdayPlan.breakfast, new Date(saturdayPlan.date.setHours(6)), BREAKFAST);
-            calendar.addRecipe(saturdayPlan.brunch, new Date(saturdayPlan.date.setHours(9)), BRUNCH);
-            calendar.addRecipe(saturdayPlan.lunch, new Date(saturdayPlan.date.setHours(12)), LUNCH);
-            calendar.addRecipe(saturdayPlan.snack, new Date(saturdayPlan.date.setHours(15)), SNACK);
-            calendar.addRecipe(saturdayPlan.dinner, new Date(saturdayPlan.date.setHours(18)), DINNER);
-//            calendar.addRecipe(saturdayPlan.workout, new Date(saturdayPlan.date.setHours(21)), WORKOUT);
+            });
 
 
+            //  Sunday 11/11
             let cinnamonBananaShake = new Recipe('Cinnamon Banana Shake');
+            cinnamonBananaShake.addIngredient(new Ingredient('almond milk', 'cup', 1));
+            cinnamonBananaShake.addIngredient(new Ingredient('soy yogurt', 'oz', 10.5));
+            cinnamonBananaShake.addIngredient(new Ingredient('banana', '', 0.5));
+            cinnamonBananaShake.addIngredient(new Ingredient('natural almond butter', 'tbsp', 1));
+            cinnamonBananaShake.addIngredient(new Ingredient('cinnamon powder', 'tsp', 0.5));
+
             let quickZucchiniParmesanHash = new Recipe('Quick Zucchini &amp; Parmesan Hash');
+
             let whiteBeanSoupSmokedTofu = new Recipe('White Bean Soup with Smoked Tofu');
+            whiteBeanSoupSmokedTofu.addIngredient(new Ingredient('white beans (canned)', 'oz', 3.5));
+            whiteBeanSoupSmokedTofu.addIngredient(new Ingredient('whole-grain pasta', 'oz', 1.75));
+            whiteBeanSoupSmokedTofu.addIngredient(new Ingredient('organic vegetable stock', 'cups', 1.67));
+            whiteBeanSoupSmokedTofu.addIngredient(new Ingredient('diced tomato', '', 1));
+            whiteBeanSoupSmokedTofu.addIngredient(new Ingredient('diced red onion', '', 0.5));
+            whiteBeanSoupSmokedTofu.addIngredient(new Ingredient('smoked tofu', 'oz', 1.75));
+            whiteBeanSoupSmokedTofu.addIngredient(new Ingredient('mixed Italian herbs', 'tsp', 0.5));
+            whiteBeanSoupSmokedTofu.addIngredient(new Ingredient('virgin olive oil', 'tsp', 2));
 
-            index.addEntry(cinnamonBananaShake);
-            index.addEntry(quickZucchiniParmesanHash);
-            index.addEntry(whiteBeanSoupSmokedTofu);
-
-            sundayPlan = {
+            plans.push({
                 date: new Date(2018, 10, 11),
                 breakfast: snickersPorridge,
                 brunch: cinnamonBananaShake,
@@ -625,32 +561,224 @@
                 snack: quickZucchiniParmesanHash,
                 dinner: whiteBeanSoupSmokedTofu,
                 workout: null
+            });
+
+
+            //  Monday 11/12
+            let mustardDeviledEggs = new Recipe('Mustard Deviled Eggs');
+            mustardDeviledEggs.addIngredient(new Ingredient('hard-boiled eggs', '', 4));
+            mustardDeviledEggs.addIngredient(new Ingredient('Dijon mustard', 'tsp', 2));
+            mustardDeviledEggs.addIngredient(new Ingredient('cottage cheese', 'oz', 3.5));
+            mustardDeviledEggs.addIngredient(new Ingredient('chopped dill', 'tbsp', 2));
+
+            let pineappleMangoSmoothie = new Recipe('Pineapple Mango Smoothie');
+            pineappleMangoSmoothie.addIngredient(new Ingredient('mango', '', 0.5));
+            pineappleMangoSmoothie.addIngredient(new Ingredient('fresh pineapple', 'oz', 3.5));
+            pineappleMangoSmoothie.addIngredient(new Ingredient('coconut water', 'cups', 0.67));
+            pineappleMangoSmoothie.addIngredient(new Ingredient('low-fat coconut milk', 'cups', 0.2));
+            pineappleMangoSmoothie.addIngredient(new Ingredient('natural cashew butter', 'tbsp', 1));
+
+            let mintyWatermelonFetaSalad = new Recipe('Minty Watermelon Feta Salad');
+            mintyWatermelonFetaSalad.addIngredient(new Ingredient('seedless watermelon', 'oz', 15.75));
+            mintyWatermelonFetaSalad.addIngredient(new Ingredient('low-fat feta cheese', 'oz', 5.25));
+            mintyWatermelonFetaSalad.addIngredient(new Ingredient('fresh mint', 'bunches', 0.5));
+            mintyWatermelonFetaSalad.addIngredient(new Ingredient('roasted pine nuts', 'oz', 1));
+            mintyWatermelonFetaSalad.addIngredient(new Ingredient('lime', '', 1));
+            mintyWatermelonFetaSalad.addIngredient(new Ingredient('virgin olive oil', 'tsp', 1.5));
+
+            let sweetSpicyWildRice = new Recipe('Sweet & Spicy Wild Rice');
+            sweetSpicyWildRice.addIngredient(new Ingredient('wile rice', 'oz', 1.75));
+            sweetSpicyWildRice.addIngredient(new Ingredient('mango', '', 0.5));
+            sweetSpicyWildRice.addIngredient(new Ingredient('cooked beetroot', 'oz', 1.75));
+            sweetSpicyWildRice.addIngredient(new Ingredient('cashews', 'oz', 1));
+            sweetSpicyWildRice.addIngredient(new Ingredient('lime', '', 0.5));
+            sweetSpicyWildRice.addIngredient(new Ingredient('sliced chili peppers', '', 0.5));
+            sweetSpicyWildRice.addIngredient(new Ingredient('fresh cilantro', 'bunches', 0.25));
+            sweetSpicyWildRice.addIngredient(new Ingredient('fresh mint', 'bunches', 0.25));
+            sweetSpicyWildRice.addIngredient(new Ingredient('low-sodium soy sauce', 'tbsp', 1));
+            sweetSpicyWildRice.addIngredient(new Ingredient('cayenne pepper', 'pinch', 1));
+
+            let mintyQuarkShake = new Recipe('Minty Quark Shake');
+            mintyQuarkShake.addIngredient(new Ingredient('low-fat quark', 'oz', 14));
+            mintyQuarkShake.addIngredient(new Ingredient('cucumber', '', 1));
+            mintyQuarkShake.addIngredient(new Ingredient('fresh mint', 'bunches', 1));
+            mintyQuarkShake.addIngredient(new Ingredient('low-fat milk', 'cups', 0.75));
+            mintyQuarkShake.addIngredient(new Ingredient('water', 'cups', 1.25));
+            console.log(mintyQuarkShake.ingredients.length);
+
+            plans.push({
+                date: new Date(2018, 10, 12),
+                breakfast: mustardDeviledEggs,
+                brunch: pineappleMangoSmoothie,
+                lunch: mintyWatermelonFetaSalad,
+                snack: crispMozzarellaSlices,
+                dinner: sweetSpicyWildRice,
+                workout: mintyQuarkShake
+            });
+
+
+            //  Tuesday 11/13
+            let berryApricotMuesli = new Recipe('Berry Apricot Muesli');
+
+            plans.push({
+                date: new Date(2018, 10, 13),
+                breakfast: cinnamonBananaShake,
+                brunch: tofuTomatoSlices,
+                lunch: sweetSpicyWildRice,
+                snack: berryApricotMuesli,
+                dinner: chickenQuinoaBowlBeetrootHummus,
+                workout: bananaQuark
+            });
+
+
+            //  Wednesday 11/14
+            let peanutButterOvernightOats = new Recipe('Peanut Butter Overnight Oats');
+            let blueberryBomb = new Recipe('Blueberry Bomb');
+
+            plans.push({
+                date: new Date(2018, 10, 14),
+                breakfast: peanutButterOvernightOats,
+                brunch: kiwiVanillaOats,
+                lunch: whiteBeanSoupSmokedTofu,
+                snack: eggRadishesToast,
+                dinner: spinachApricotSalad,
+                workout: blueberryBomb
+            });
+
+
+            //  Thursday 11/15
+            let crayfishAvocadoBread = new Recipe('Crayfish Avocado Bread');
+            let greenVegetablesFetaCheese = new Recipe('Green Vegetables with Feta Cheese');
+            let greekFetaWrap = new Recipe('Greek Feta Wrap');
+            let lemonHerbChicken = new Recipe('Lemon Herb Chicken');
+
+            plans.push({
+                date: new Date(2018, 10, 15),
+                breakfast: crayfishAvocadoBread,
+                brunch: greenVegetablesFetaCheese,
+                lunch: chickpeaGrapefruitSalad,
+                snack: greekFetaWrap,
+                dinner: lemonHerbChicken,
+                workout: carrotCucumberShake
+            });
+
+
+            //  Friday 11/16
+            let chiliCarne = new Recipe('Chili con Carne');
+            let honeyQuark = new Recipe('Honey Quark');
+            let ovenBakedPotatoesShrimp = new Recipe('Oven Baked Potatoes with Shrimp');
+
+            plans.push({
+                date: new Date(2018, 10, 16),
+                breakfast: bircherMuesli,
+                brunch: cinnamonBananaShake,
+                lunch: chiliCarne,
+                snack: honeyQuark,
+                dinner: tofuTomatoSlices,
+                workout: ovenBakedPotatoesShrimp
+            });
+
+
+            //  Saturday 11/17
+            let oatmealEnergyShake = new Recipe('Oatmeal Energy Shake');
+            let riceCrackerEggApple = new Recipe('Rice Cracker with Egg and Apple');
+            let sweetSpicyCarrotSalad = new Recipe('Sweet and Spicy Carrot Salad');
+
+            plans.push({
+                date: new Date(2018, 10, 17),
+                breakfast: honeyQuark,
+                brunch: oatmealEnergyShake,
+                lunch: riceCrackerEggApple,
+                snack: oatsBlackberryJam,
+                dinner: sweetSpicyCarrotSalad,
+            });
+
+
+            //  Sunday 11/18
+            let vanillaChiaPudding = new Recipe('Vanilla Chia Pudding');
+            let healthierQuesadilla = new Recipe('Healthier Quesadilla');
+
+            plans.push({
+                date: new Date(2018, 10, 18),
+                breakfast: vanillaChiaPudding,
+                brunch: savryPorridgeSunnyEgg,
+                lunch: beetrootCarpaccio,
+                snack: berryApricotMuesli,
+                dinner: healthierQuesadilla
+            });
+
+
+            let shoppingList = [];
+            let week = {
+                start: new Date(2018, 10, 11),
+                end: new Date(2018, 10, 18)
             };
-
-            calendar.addRecipe(sundayPlan.breakfast, new Date(sundayPlan.date.setHours(6)), BREAKFAST);
-            calendar.addRecipe(sundayPlan.brunch, new Date(sundayPlan.date.setHours(9)), BRUNCH);
-            calendar.addRecipe(sundayPlan.lunch, new Date(sundayPlan.date.setHours(12)), LUNCH);
-            calendar.addRecipe(sundayPlan.snack, new Date(sundayPlan.date.setHours(15)), SNACK);
-            calendar.addRecipe(sundayPlan.dinner, new Date(sundayPlan.date.setHours(18)), DINNER);
-//            calendar.addRecipe(sundayPlan.workout, new Date(sundayPlan.date.setHours(21)), WORKOUT);
-
-            let d = new Date(2018, 10, 4);
-            let end = new Date(2018, 10, 19);
             for(let i=0; i<plans.length; i++) {
-
-
+                let d = plans[i].date;
                 if(plans[i].breakfast) {
-                    d.setHours(6);
-                    calendar.addRecipe(plans[i].breakfast, new Date(d), BREAKFAST);
-                }
+                    index.addEntry(plans[i].breakfast);
+                    calendar.addRecipe(plans[i].breakfast, d, BREAKFAST);
+                    console.log(plans[i].breakfast.ingredients.length);
 
-                calendar.addRecipe(mondayPlan.brunch, new Date(mondayPlan.date.setHours(9)), BRUNCH);
-                calendar.addRecipe(mondayPlan.lunch, new Date(mondayPlan.date.setHours(12)), LUNCH);
-                calendar.addRecipe(mondayPlan.snack, new Date(mondayPlan.date.setHours(15)), SNACK);
-                calendar.addRecipe(mondayPlan.dinner, new Date(mondayPlan.date.setHours(18)), DINNER);
-                calendar.addRecipe(mondayPlan.workout, new Date(mondayPlan.date.setHours(21)), WORKOUT);
-                d.setDate(d.getDate() + 1);
+                    if(d >= week.start && d < week.end)
+                        shoppingList = shoppingList.concat(plans[i].breakfast.ingredients);
+
+                }
+                if(plans[i].brunch) {
+                    index.addEntry(plans[i].brunch);
+
+                    calendar.addRecipe(plans[i].brunch, d, BRUNCH);
+
+                    if(d >= week.start && d < week.end)
+                        shoppingList = shoppingList.concat(plans[i].brunch.ingredients);
+                }
+                if(plans[i].lunch) {
+                    index.addEntry(plans[i].lunch);
+
+                    calendar.addRecipe(plans[i].lunch, d, LUNCH);
+
+                    if(d >= week.start && d < week.end)
+                        shoppingList = shoppingList.concat(plans[i].lunch.ingredients);
+                }
+                if(plans[i].snack) {
+                    index.addEntry(plans[i].snack);
+
+                    calendar.addRecipe(plans[i].snack, d, SNACK);
+
+                    if(d >= week.start && d < week.end)
+                        shoppingList = shoppingList.concat(plans[i].snack.ingredients);
+                }
+                if(plans[i].dinner) {
+                    index.addEntry(plans[i].dinner);
+
+                    calendar.addRecipe(plans[i].dinner, d, DINNER);
+
+                    if(d >= week.start && d < week.end)
+                        shoppingList = shoppingList.concat(plans[i].dinner.ingredients);
+                }
+                if(plans[i].workout) {
+                    index.addEntry(plans[i].workout);
+
+                    calendar.addRecipe(plans[i].workout, d, WORKOUT);
+
+                    if(d >= week.start && d < week.end)
+                        shoppingList = shoppingList.concat(plans[i].workout.ingredients);
+                }
             }
+            let i=0, j=0;
+            while(i<shoppingList.length) {
+                j=i+1;
+                while(j<shoppingList.length) {
+                    if(shoppingList[i].name === shoppingList[j].name && shoppingList[i].unit === shoppingList[j].unit) {
+                        shoppingList[i].qty += shoppingList[j].qty;
+                        shoppingList.splice(j, 1);
+                    }
+                    j++;
+                }
+                i++;
+            }
+            shoppingList.sort((a,b) => {if(a.name === b.name){return a.unit > b.unit} return a.name.toLowerCase() > b.name.toLowerCase()});
+            console.log(shoppingList);
         }
 
     </script>

@@ -40,6 +40,10 @@
     text-overflow: ellipsis;
 }
 
+.recipe, .meal {
+    cursor: pointer;
+}
+
 
 @media (min-width: 800px) {
     .meal-plan table td {
