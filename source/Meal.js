@@ -3,8 +3,9 @@
  */
 
 class Meal {
-    constructor() {
-
+    constructor(date, time, recipe) {
+        this.date = date;
+        this.time = time;
+        this.recipe = recipe;
     }
-
 }
