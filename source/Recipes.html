@@ -32,7 +32,7 @@
     <script type="text/javascript" src="RecipeInput.js"></script>
     <script type="text/javascript" src="RecipeIndex.js"></script>
     <script type="text/javascript" src="Meal.js"></script>
-    <script type="text/javascript" src="MealPlan.js"></script>
+    <script type="text/javascript" src="MealCalendar.js"></script>
     <script type="text/javascript" src="GroceryList.js"></script>
     <script type="text/javascript" src="GroceryReceipt.js"></script>
 
@@ -48,8 +48,8 @@
             container.className = 'content';
             document.body.appendChild(container);
 
-            //  Define the meal plan
-            window.calendar = new MealPlan();
+            //  Define the meal calendar
+            window.calendar = new MealCalendar();
             container.appendChild(calendar.container);
 
             //  Define the recipe index
