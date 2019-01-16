@@ -72,7 +72,7 @@ class RecipeInput {
             recipe.addInstruction(inst.input.value);
         }
 
-        RecipeIndex.saveRecipe(recipe);
+        // RecipeIndex.saveRecipe(recipe);
     }
 
     addIngd() {

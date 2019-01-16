@@ -9,7 +9,7 @@ message*.*
 commit-message.md
 
 //  Ignore Stanford JavaScript Crypto Library directory
-source/sjcl-master/*
+sjcl-master/*
 
 //  Ignore images
 *.png

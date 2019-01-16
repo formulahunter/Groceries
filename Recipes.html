@@ -100,6 +100,13 @@
             //  Tuesday 11/6
             let snickersPorridge = new Recipe('Snickers Porridge');
             let oatsBlackberryJam = new Recipe('Oats with Blackberry Jam');
+            oatsBlackberryJam.addIngredient(new Ingredient('fine oats', 'oz', 1.33));
+            oatsBlackberryJam.addIngredient(new Ingredient('soy yogurt', 'oz', 5.25));
+            oatsBlackberryJam.addIngredient(new Ingredient('blackberries', 'oz', 2.67));
+            oatsBlackberryJam.addIngredient(new Ingredient('chia seeds', 'tbsp', 1.5));
+            oatsBlackberryJam.addIngredient(new Ingredient('lemons', '', 0.5));
+            oatsBlackberryJam.addIngredient(new Ingredient('honey', 'tbsp', 1));
+
             let cauliflowerCurry = new Recipe('Cauliflower Curry');
             let chaoticSalmon = new Recipe('Chaotic Salmon');
             let chickenSate = new Recipe('Chicken Sat&eacute;');
@@ -144,6 +151,9 @@
             let applePeanutButter = new Recipe('Apple & Peanut Butter');
             let quinoaSaladPrawns = new Recipe('Quinoa Salad with Prawns');
             let bananaQuark = new Recipe('Banana Quark');
+            bananaQuark.addIngredient(new Ingredient('low-fat quark', 'oz', 12.67));
+            bananaQuark.addIngredient(new Ingredient('bananas', '', 2));
+            bananaQuark.addIngredient(new Ingredient('water', 'cups', 0.75));
 
             plans.push({
                 date: new Date(2018, 10, 8),
@@ -159,6 +169,13 @@
             //  Friday 11/9
             let chocolateMintLatte = new Recipe('Chocolate Mint Latte');
             let kiwiVanillaOats = new Recipe('Kiwi Vanilla Oats');
+            kiwiVanillaOats.addIngredient(new Ingredient('fine oats', 'oz', 1.33));
+            kiwiVanillaOats.addIngredient(new Ingredient('soy yogurt', 'oz', 5.25));
+            kiwiVanillaOats.addIngredient(new Ingredient('ripe kiwis', '', 2));
+            kiwiVanillaOats.addIngredient(new Ingredient('chia seeds', 'tbsp', 2));
+            kiwiVanillaOats.addIngredient(new Ingredient('honey', 'tbsp', 1));
+            kiwiVanillaOats.addIngredient(new Ingredient('fresh vanilla', 'tsp', 0.5));
+
             let chickenQuinoaBowlBeetrootHummus = new Recipe('Chicken Quinoa Bowl with Beetroot Hummus');
             let tofuTomatoSlices = new Recipe('Tofu Tomato Slices');
             tofuTomatoSlices.addIngredient(new Ingredient('crisp whole-grain bread', 'slices', 4));
@@ -183,6 +200,15 @@
             //  Saturday 11/10
             let onePotChickenKorma = new Recipe('One Pot Chicken Korma');
             let bircherMuesli = new Recipe('Bircher Muesli');
+            bircherMuesli.addIngredient(new Ingredient('fine oats', 'oz', 1));
+            bircherMuesli.addIngredient(new Ingredient('apples', '', 0.5));
+            bircherMuesli.addIngredient(new Ingredient('raising', 'oz', 0.75));
+            bircherMuesli.addIngredient(new Ingredient('ground flaxseeds', 'tbsp', 0.5));
+            bircherMuesli.addIngredient(new Ingredient('chopped almonds', 'tbsp', 0.5));
+            bircherMuesli.addIngredient(new Ingredient('soy yogurt', 'oz', 2.67));
+            bircherMuesli.addIngredient(new Ingredient('soy milk', 'cups', 0.3));
+            bircherMuesli.addIngredient(new Ingredient('lemons', '', 0.25));
+
             let friedFishCurriedSpinach = new Recipe('Fried Fish with Curried Spinach');
 
             plans.push({
@@ -297,6 +323,10 @@
             //  Wednesday 11/14
             let peanutButterOvernightOats = new Recipe('Peanut Butter Overnight Oats');
             let blueberryBomb = new Recipe('Blueberry Bomb');
+            blueberryBomb.addIngredient(new Ingredient('blueberries', 'oz', 8.75));
+            blueberryBomb.addIngredient(new Ingredient('banana', '', 1));
+            blueberryBomb.addIngredient(new Ingredient('soy yogurt', 'oz', 14));
+            blueberryBomb.addIngredient(new Ingredient('maple syrup', 'tsp', 2));
 
             plans.push({
                 date: new Date(2018, 10, 14),
@@ -311,6 +341,10 @@
 
             //  Thursday 11/15
             let crayfishAvocadoBread = new Recipe('Crayfish Avocado Bread');
+            crayfishAvocadoBread.addIngredient(new Ingredient('whole-grain bread', 'slices', 2));
+            crayfishAvocadoBread.addIngredient(new Ingredient('avocados', '', 0.5));
+            crayfishAvocadoBread.addIngredient(new Ingredient('crayfish (cooked and peeled)', 'oz', 4.33));
+
             let greenVegetablesFetaCheese = new Recipe('Green Vegetables with Feta Cheese');
             let greekFetaWrap = new Recipe('Greek Feta Wrap');
             let lemonHerbChicken = new Recipe('Lemon Herb Chicken');
@@ -328,6 +362,18 @@
 
             //  Friday 11/16
             let chiliCarne = new Recipe('Chili con Carne');
+            chiliCarne.addIngredient(new Ingredient('ground lean beef', 'oz', 7));
+            chiliCarne.addIngredient(new Ingredient('canned kidney beans', 'oz', 3.5));
+            chiliCarne.addIngredient(new Ingredient('chopped tomatoes', '', 2));
+            chiliCarne.addIngredient(new Ingredient('sliced carrots', '', 2));
+            chiliCarne.addIngredient(new Ingredient('diced onion', '', 1));
+            chiliCarne.addIngredient(new Ingredient('chopped garlic', 'cloves', 1));
+            chiliCarne.addIngredient(new Ingredient('grated ginger', 'oz', 0.4));
+            chiliCarne.addIngredient(new Ingredient('water', 'cups', 0.75));
+            chiliCarne.addIngredient(new Ingredient('chili flakes', 'tsp', 0.5));
+            chiliCarne.addIngredient(new Ingredient('coconut oil', 'tsp', 1));
+            chiliCarne.addIngredient(new Ingredient('cilantro (coriander)', 'bunches', 0.5));
+
             let honeyQuark = new Recipe('Honey Quark');
             let ovenBakedPotatoesShrimp = new Recipe('Oven Baked Potatoes with Shrimp');
 
@@ -360,6 +406,13 @@
             //  Sunday 11/18
             let vanillaChiaPudding = new Recipe('Vanilla Chia Pudding');
             let healthierQuesadilla = new Recipe('Healthier Quesadilla');
+            healthierQuesadilla.addIngredient(new Ingredient('whole-grain tortilla', '', 2));
+            healthierQuesadilla.addIngredient(new Ingredient('low-fat yogurt', 'tbsp', 2));
+            healthierQuesadilla.addIngredient(new Ingredient('tomatoes', '', 1));
+            healthierQuesadilla.addIngredient(new Ingredient('jalapenos', '', 1.5));
+            healthierQuesadilla.addIngredient(new Ingredient('spring onions', '', 2));
+            healthierQuesadilla.addIngredient(new Ingredient('low-fat cheddar cheese', 'oz', 1.33));
+            healthierQuesadilla.addIngredient(new Ingredient('roasted sunflower seeds', 'tsp', 4));
 
             plans.push({
                 date: new Date(2018, 10, 18),
@@ -371,10 +424,200 @@
             });
 
 
+            //  Sunday 11/25
+            let whiteBeansCreamySauce = new Recipe('White Beans with Creamy Sauce');
+            whiteBeansCreamySauce.addIngredient(new Ingredient('white beans', 'oz', 5.25));
+            whiteBeansCreamySauce.addIngredient(new Ingredient('cooked chickpeas', 'oz', 3.5));
+            whiteBeansCreamySauce.addIngredient(new Ingredient('cottage cheese', 'oz', 7));
+            whiteBeansCreamySauce.addIngredient(new Ingredient('diced cherry tomatoes', 'oz', 3.5));
+            whiteBeansCreamySauce.addIngredient(new Ingredient('lemons', '', 0.5));
+            whiteBeansCreamySauce.addIngredient(new Ingredient('chopped dill', 'bunches', 0.5));
+            whiteBeansCreamySauce.addIngredient(new Ingredient('parsley', 'bunches', 0.5));
+
+            plans.push({
+                date: new Date(2018, 10, 25),
+                dinner: whiteBeansCreamySauce
+            });
+
+
+            //  Monday 11/26
+            let tunaCornWrap = new Recipe('Tuna-Corn Wrap');
+            tunaCornWrap.addIngredient(new Ingredient('whole-grain tortilla', '', 2));
+            tunaCornWrap.addIngredient(new Ingredient('water-packed tuna', 'oz', 5.25));
+            tunaCornWrap.addIngredient(new Ingredient('eggs', '', 2));
+            tunaCornWrap.addIngredient(new Ingredient('yellow corn', 'oz', 3,5));
+            tunaCornWrap.addIngredient(new Ingredient('whole yogurt', 'tbsp', 4));
+            tunaCornWrap.addIngredient(new Ingredient('Dijon mustard', 'tsp', 2));
+
+            plans.push({
+                date: new Date(2018, 10, 26),
+                breakfast: kiwiVanillaOats,
+                brunch: bircherMuesli,
+                lunch: tunaCornWrap,
+                dinner: healthierQuesadilla,
+                workout: bananaQuark
+            });
+
+
+            //  Tuesday 11/27
+            let coconutQuinoaMuesli = new Recipe('Coconut Quinoa Muesli');
+            coconutQuinoaMuesli.addIngredient(new Ingredient('quinoa', 'oz', 1.75));
+            coconutQuinoaMuesli.addIngredient(new Ingredient('almond milk', 'cups', 0.67));
+            coconutQuinoaMuesli.addIngredient(new Ingredient('low-fat quark', 'oz', 7));
+            coconutQuinoaMuesli.addIngredient(new Ingredient('coconut flakes', 'tsp', 4));
+            coconutQuinoaMuesli.addIngredient(new Ingredient('red currants', 'oz', 3.5));
+            coconutQuinoaMuesli.addIngredient(new Ingredient('water', 'cups', 0.2));
+
+            let apricotPorridge = new Recipe('Apricot Porridge');
+            apricotPorridge.addIngredient(new Ingredient('oats', 'oz', 1.25));
+            apricotPorridge.addIngredient(new Ingredient('almond milk', 'cups', 0.67));
+            apricotPorridge.addIngredient(new Ingredient('bananas', '', 0.5));
+            apricotPorridge.addIngredient(new Ingredient('dried apricots', '', 2));
+            apricotPorridge.addIngredient(new Ingredient('roasted sunflower seeds', 'oz', 0.5));
+            apricotPorridge.addIngredient(new Ingredient('unrefined salt', 'pinch', 1));
+
+            let quickChickpeaVeggieSoup = new Recipe('Quick Chickpea Veggie Soup');
+            quickChickpeaVeggieSoup.addIngredient(new Ingredient('cooked chickpeas', 'oz', 8.75));
+            quickChickpeaVeggieSoup.addIngredient(new Ingredient('carrots', '', 1));
+            quickChickpeaVeggieSoup.addIngredient(new Ingredient('tomatoes', '', 1));
+            quickChickpeaVeggieSoup.addIngredient(new Ingredient('green beans', 'oz', 3.5));
+            quickChickpeaVeggieSoup.addIngredient(new Ingredient('vegetable stock', 'cups', 1.25));
+            quickChickpeaVeggieSoup.addIngredient(new Ingredient('grated Parmesean cheese', 'oz', 1.33));
+            quickChickpeaVeggieSoup.addIngredient(new Ingredient('whole-grain bread', 'slices', 2));
+
+            let simpleBananaMuffins = new Recipe('Simple Banana Muffins');
+            simpleBananaMuffins.addIngredient(new Ingredient('eggs', '', 3));
+            simpleBananaMuffins.addIngredient(new Ingredient('bananas', '', 1.5));
+            simpleBananaMuffins.addIngredient(new Ingredient('raspberries', 'oz', 5.25));
+            simpleBananaMuffins.addIngredient(new Ingredient('coconut oil', 'tsp', 1.5));
+
+            let indianPotatoSalad = new Recipe('Indian Potato Salad');
+            indianPotatoSalad.addIngredient(new Ingredient('small potatoes', 'oz', 14));
+            indianPotatoSalad.addIngredient(new Ingredient('red onions', '', 0.5));
+            indianPotatoSalad.addIngredient(new Ingredient('limes', '', 0.5));
+            indianPotatoSalad.addIngredient(new Ingredient('chopped cilantro', 'tbsp', 1));
+            indianPotatoSalad.addIngredient(new Ingredient('parsley', 'tbsp', 1));
+            indianPotatoSalad.addIngredient(new Ingredient('curry powder', 'pinch', 1));
+            indianPotatoSalad.addIngredient(new Ingredient('turmeric powder', 'pinch', 1));
+            indianPotatoSalad.addIngredient(new Ingredient('cayenne papper', 'pinch', 1));
+            indianPotatoSalad.addIngredient(new Ingredient('ground cumin', 'pinch', 1));
+            indianPotatoSalad.addIngredient(new Ingredient('black sesame', 'tbsp', 1));
+            indianPotatoSalad.addIngredient(new Ingredient('virgin olive oil', 'tbsp', 1));
+
+            plans.push({
+                date: new Date(2018, 10, 27),
+                breakfast: coconutQuinoaMuesli,
+                brunch: apricotPorridge,
+                lunch: quickChickpeaVeggieSoup,
+                snack: simpleBananaMuffins,
+                dinner: indianPotatoSalad,
+                workout: whiteBeansCreamySauce
+            });
+
+
+            //  Wednesday 11/28
+            let stuffedMedjoolDates = new Recipe('Stuffed Medjool Dates');
+            stuffedMedjoolDates.addIngredient(new Ingredient('medjool dates', '', 6));
+            stuffedMedjoolDates.addIngredient(new Ingredient('almond butter', 'tsp', 6));
+
+            let mediterraneanPastaSalad = new Recipe('Mediterranean Pasta Salad');
+            mediterraneanPastaSalad.addIngredient(new Ingredient('whole-grain pasta', 'oz', 2));
+            mediterraneanPastaSalad.addIngredient(new Ingredient('low-fat mozzarella', 'oz', 3.5));
+            mediterraneanPastaSalad.addIngredient(new Ingredient('sun-dried tomatoes', 'oz', 1));
+            mediterraneanPastaSalad.addIngredient(new Ingredient('arugula', 'oz', 1));
+            mediterraneanPastaSalad.addIngredient(new Ingredient('dried oregano', 'tsp', 1));
+            mediterraneanPastaSalad.addIngredient(new Ingredient('balsamic vinegar', 'tsp', 1));
+
+            plans.push({
+                date: new Date(2018, 10, 28),
+                breakfast: bircherMuesli,
+                brunch: oatsBlackberryJam,
+                lunch: sweetSpicyWildRice,
+                snack: stuffedMedjoolDates,
+                dinner: mediterraneanPastaSalad,
+                workout: bananaQuark
+            });
+
+
+            //  Thursday 11/29
+            let sweetQuinoaCreamyAvocado = new Recipe('Sweet Quinoa with Creamy Avocado');
+            sweetQuinoaCreamyAvocado.addIngredient(new Ingredient('quinoa', 'oz', 1.75));
+            sweetQuinoaCreamyAvocado.addIngredient(new Ingredient('avocados', '', 0.5));
+            sweetQuinoaCreamyAvocado.addIngredient(new Ingredient('fresh vanilla', 'tsp', 0.5));
+            sweetQuinoaCreamyAvocado.addIngredient(new Ingredient('honey', 'tsp', 1));
+            sweetQuinoaCreamyAvocado.addIngredient(new Ingredient('almond milk', 'cups', 0.4));
+            sweetQuinoaCreamyAvocado.addIngredient(new Ingredient('pomegranates', '', 0.5));
+
+            let redLentilDaal = new Recipe('Red Lentil Daal');
+            redLentilDaal.addIngredient(new Ingredient('red lentils', 'oz', 5.25));
+            redLentilDaal.addIngredient(new Ingredient('red onion', '', 1));
+            redLentilDaal.addIngredient(new Ingredient('garlic', 'cloves', 1.5));
+            redLentilDaal.addIngredient(new Ingredient('ginger', 'oz', 0.5));
+            redLentilDaal.addIngredient(new Ingredient('low-fat coconut milk', 'cups', 0.67));
+            redLentilDaal.addIngredient(new Ingredient('water', 'cups', 1));
+            redLentilDaal.addIngredient(new Ingredient('ground cumin', 'pinch', 1));
+            redLentilDaal.addIngredient(new Ingredient('turmeric powder', 'pinch', 1));
+            redLentilDaal.addIngredient(new Ingredient('ground coriander', 'pinch', 1));
+            redLentilDaal.addIngredient(new Ingredient('cayennne pepper', 'pinch', 1));
+            redLentilDaal.addIngredient(new Ingredient('bay leaves', '', 3));
+
+            let potatoBellPepperPanMushrooms = new Recipe('Potato Bell Pepper Pan with Mushrooms');
+            potatoBellPepperPanMushrooms.addIngredient(new Ingredient('cooked potatoes', 'oz', 8.75));
+            potatoBellPepperPanMushrooms.addIngredient(new Ingredient('red bell peppers', '', 1));
+            potatoBellPepperPanMushrooms.addIngredient(new Ingredient('garlic', 'cloves', 1));
+            potatoBellPepperPanMushrooms.addIngredient(new Ingredient('brown mushrooms', '', 6));
+            potatoBellPepperPanMushrooms.addIngredient(new Ingredient('chopped tomatoes', 'oz', 8.75));
+            potatoBellPepperPanMushrooms.addIngredient(new Ingredient('virgin olive oil', 'tsp', 1.5));
+
+            plans.push({
+                date: new Date(2018, 10, 29),
+                breakfast: sweetQuinoaCreamyAvocado,
+                brunch: kiwiVanillaOats,
+                lunch: redLentilDaal,
+                snack: crayfishAvocadoBread,
+                dinner: potatoBellPepperPanMushrooms,
+                workout: blueberryBomb
+            });
+
+
+            //  Friday 11/30
+            let appleCelerySnack = new Recipe('Apple Celery Snack');
+            appleCelerySnack.addIngredient(new Ingredient('cottage cheese', 'oz', 10.5));
+            appleCelerySnack.addIngredient(new Ingredient('celery', 'stalks', 2));
+            appleCelerySnack.addIngredient(new Ingredient('apple', '', 1));
+            appleCelerySnack.addIngredient(new Ingredient('curry powder', 'tsp', 0.5));
+            appleCelerySnack.addIngredient(new Ingredient('parsely', 'bunches', 0.5));
+
+            let veganBeetrootSalad = new Recipe('Vegan Beetroot Salad');
+            veganBeetrootSalad.addIngredient(new Ingredient('cooked beetroot', 'oz', 0.5));
+            veganBeetrootSalad.addIngredient(new Ingredient('kohlrabi', '', 1));
+            veganBeetrootSalad.addIngredient(new Ingredient('diced apples', '', 1.5));
+            veganBeetrootSalad.addIngredient(new Ingredient('cooked chickpeas', 'oz', 7));
+            veganBeetrootSalad.addIngredient(new Ingredient('natural almond butter', 'tbsp', 1));
+            veganBeetrootSalad.addIngredient(new Ingredient('virgin olive oil', 'tbsp', 1));
+
+            let wholeGrainPizzaSlices = new Recipe('Whole-Grain Pizza Slices');
+            wholeGrainPizzaSlices.addIngredient(new Ingredient('whole-grain bread', 'slices', 3));
+            wholeGrainPizzaSlices.addIngredient(new Ingredient('tomato puree', 'tsp', 2));
+            wholeGrainPizzaSlices.addIngredient(new Ingredient('brown mushroom', '', 1));
+            wholeGrainPizzaSlices.addIngredient(new Ingredient('lean ham (slices)', 'oz', 1.75));
+            wholeGrainPizzaSlices.addIngredient(new Ingredient('low-fat mozzarella', 'oz', 3.5));
+
+            plans.push({
+                date: new Date(2018, 10, 30),
+                breakfast: oatsBlackberryJam,
+                brunch: appleCelerySnack,
+                lunch: veganBeetrootSalad,
+                snack: bircherMuesli,
+                dinner: chiliCarne,
+                workout: wholeGrainPizzaSlices
+            });
+
+
             let shoppingList = [];
             let week = {
-                start: new Date(2018, 10, 11),
-                end: new Date(2018, 10, 18)
+                start: new Date(2018, 10, 26),
+                end: new Date(2018, 11, 1)
             };
             for(let i=0; i<plans.length; i++) {
                 let d = plans[i].date;
