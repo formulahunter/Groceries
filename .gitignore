@@ -8,6 +8,9 @@ data/*
 message*.*
 commit-message.md
 
+//  Ignore Stanford JavaScript Crypto Library directory
+source/sjcl-master/*
+
 //  Ignore images
 *.png
 *.gif

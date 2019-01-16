@@ -54,11 +54,11 @@ class MealCalendar {
     setWeek(week) {
         //  Set a new date `d` to midnight on the Sunday of the week in which the argument `week` falls
         let d = new Date(week.getFullYear(), week.getMonth(), week.getDate() - week.getDay());
-        console.info(`Set calendar to display the week beginning ${d.toLocaleDateString()}`);
+        console.debug(`Set calendar to display the week beginning ${d.toLocaleDateString()}`);
 
         //  If the indicated week is already displayed, do nothing
         if(d === this.week) {
-            console.log(`The week of ${d.toLocaleDateString()} is already displayed on the calendar`);
+            console.info(`The week of ${d.toLocaleDateString()} is already displayed on the calendar`);
             return false;
         }
 
@@ -97,8 +97,9 @@ class MealCalendar {
 
     addRecipe(recipe, day, meal) {
         let d = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-        if(d < this.week || d - 7*24*60*60*1000 >= this.week) {
-            console.log(`${d.toLocaleDateString()} is outside of current calendar date range`);
+        if(d < this.week || d >= this.week + 7*24*60*60*1000) {
+            console.info(`${d.toLocaleDateString()} is outside of current calendar date range`);
+            console.info(this.week);
             return false;
         }
 

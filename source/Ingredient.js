@@ -45,6 +45,28 @@ class Ingredient {
         this._qty = qty;
     }
 
+    toJSON() {
+        //  `replacer()` is used to substitute certain values with other values to be serialized
+        //  Substitutions are entirely arbitrary
+        //  Here they are performed to ensure consistency in the data file while minimizing its size
+        let replacer = function (value) {
+            if(value === undefined || value === null)
+                return '';
+
+            if(value === false)
+                return 'false';
+
+            return value;
+        };
+
+        let jobj = {
+            _name: replacer(this._name),
+            _unit: this._unit,
+            _qty: this._qty
+        };
+
+        return jobj;
+    }
     toString() {
         return this.name;
     }

@@ -16,31 +16,26 @@ class RecipeIndex {
         this.container.appendChild(this.table);
 
         this.index = [];
-        this.sortFun = (a, b) => (a.title > b.title? 1 : -1);
-    }
-
-    static saveRecipe() {
-
     }
 
     addEntry(recipe) {
-        //  Check if recipe i already added and if so return its index
+        //  Check if recipe was already added and if so return its index
         let ind = this.index.indexOf(recipe);
         if(ind >= 0) {
-            console.log(`${recipe} has already been added to the index - it will not be added again`);
+            console.info(`${recipe} has already been added to the index - it will not be added again`);
             return ind;
         }
 
         ind = this.index.findIndex(a => a.title === recipe.title);
         if(ind >= 0) {
-            console.info(`Recipe title ${recipe.title} has multiple entries in the index`);
+            console.debug(`Recipe title ${recipe.title} has multiple entries in the index`);
         }
 
         //  Add recipe to index array
         this.index.push(recipe);
 
         //  Sort the index and get the position of the new recipe
-        this.index.sort(this.sortFun);
+        this.index.sort(RecipeIndex.sortFun);
         ind = this.index.indexOf(recipe);
 
         //  Create a new table row at the same position
@@ -54,9 +49,14 @@ class RecipeIndex {
         return ind;
     }
 
+    serialize() {
+        return JSON.stringify(this.index);
+    }
+
     init() {
         //  Fetch data from storage/server
 
         //  Populate display
     }
 }
+RecipeIndex.sortFun = (a, b) => (a.title > b.title? 1 : -1);
