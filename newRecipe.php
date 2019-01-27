@@ -4,7 +4,7 @@
 $jobj = json_decode(file_get_contents('php://input'));
 
 //  Load file data into object
-$file = json_decode(file_get_contents('..\data\mealplan.json'));
+$file = json_decode(file_get_contents('data/mealplan.json'));
 
 //  Add new recipe at given index
 //  New array members to be added must be provided in a container array
@@ -12,10 +12,10 @@ $file = json_decode(file_get_contents('..\data\mealplan.json'));
 array_splice($file->recipes, $jobj->ind, 0, array($jobj->recipe));
 
 //  Encode data object back to JSON string to write to file
-$jstr = json_encode($file, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+$jstr = json_encode($file, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT);
 
 //  Write new data string to file
-file_put_contents('mealplan.json', $jstr);
+file_put_contents('data/mealplan.json', $jstr);
 
 //  Remove the deleted list from the JSON object and encode the resulting data for hashing
 unset($file->deleted);

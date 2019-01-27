@@ -14,29 +14,27 @@ class RecipeIndex {
 
         this.table = document.createElement('table');
         this.container.appendChild(this.table);
-
-        this.index = [];
     }
 
     addEntry(recipe) {
         //  Check if recipe was already added and if so return its index
-        let ind = this.index.indexOf(recipe);
+        let ind = this.data.recipes.indexOf(recipe);
         if(ind >= 0) {
             console.info(`${recipe} has already been added to the index - it will not be added again`);
             return ind;
         }
 
-        ind = this.index.findIndex(a => a.title === recipe.title);
+        ind = this.data.recipes.findIndex(a => a.title === recipe.title);
         if(ind >= 0) {
             console.debug(`Recipe title ${recipe.title} has multiple entries in the index`);
         }
 
         //  Add recipe to index array
-        this.index.push(recipe);
+        this.data.recipes.push(recipe);
 
         //  Sort the index and get the position of the new recipe
-        this.index.sort(RecipeIndex.sortFun);
-        ind = this.index.indexOf(recipe);
+        this.data.recipes.sort(RecipeIndex.sortFun);
+        ind = this.data.recipes.indexOf(recipe);
 
         //  Create a new table row at the same position
         let titleRow = this.table.insertRow(ind);
@@ -50,7 +48,7 @@ class RecipeIndex {
     }
 
     serialize() {
-        return JSON.stringify(this.index);
+        return JSON.stringify(this.data.recipes);
     }
 
     init() {
@@ -59,4 +57,4 @@ class RecipeIndex {
         //  Populate display
     }
 }
-RecipeIndex.sortFun = (a, b) => (a.title > b.title? 1 : -1);
+RecipeIndex.sortFun = (a, b) => (a.title > b.title ? 1 : (a.title < b.title ? -1 : 0));

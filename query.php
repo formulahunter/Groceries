@@ -1,6 +1,6 @@
 <?php
 
-$jdat = json_decode(file_get_contents('../data/recipes.json'));
+$jdat = json_decode(file_get_contents('data/mealplan.json'));
 
 function getHash() {
     global $jdat;
@@ -14,20 +14,234 @@ function getHash() {
 }
 
 function reconcile($data) {
+/*
+    DATA RECONCILIATION
+    Data reconciliation is based on three inputs: lastSync, data provided by the client, and data saved on the server
+     - `$recon` is the 'instances' data passed from the client, assumed to all be after `$lasySync`
+     - The entire data file is retained in `$jdat`
+     - `$compiled` is where the results are compiled to be returned to the client
+     - Each data instance in `$jdat` is screened against `$lastSync` and earlier instances are ignored
+     - Instance ID's are checked against the ID's provided by the client -- instances indicated as new, modified, and deleted are all cross-checked
+     - All ID's that do not match one received from the client are added to the `$compiled` list in the appropriate category
+     - All matches are checked for most recent modification relative to '$lastSync'
+        - If only one has been changed since `$lastSync`, the other is altered to match
+        - Else if the serialized data strings are exactly equal, the more recent copy is used
+        - Else both have changed since, and both are added to the appropriate 'conflicts' list
+     - Server data file is iterated first; cleared instances are removed from `$recon`; then any remaining instances in `$recon` are cleared against the same algorithm
+*/
     global $jdat;
 
+    //  Retrieve 'lastSync' and 'pushed'
     $lastSync = $data->lastSync;
+    $recon = $data->instances;
 
     //  Compile all changes since lastSync
-
     //  Compare provided activities with activities on disk
     //   - Resolve any id conflicts
 
-    //   Server selects all activity since lastSync
-    //   Checks transmitted vs. selected activity for ID conflict
-    //    - Resolve or return error code
+    //   Select all server activity since lastSync
+    //   Check selected activity vs. transmitted for ID conflict
+    //    - Place each instance in an indicative container in `$compiled`
+    //    - Remove transmitted data incrementally as it is matched against existing server instances
+    //  Check remaining transmitted data vs. all server data (not just selected)
+    //    - Place each instance in an indicative container in `$compiled`
 
-    //   Save new client activity to disk
+    //  `$compiled` is a container of containers for each data type/status combo, e.g. ingredients-new, ingredients-modified, etc.
+    $compiled = new stdClass();
+    foreach($jdat as $type => $value) {
+        if($type === "deleted")
+            continue;
+
+        $compiled->$type = new stdClass();
+        $compiled->$type->new = new stdClass();
+        $compiled->$type->modified = new stdClass();
+        $compiled->$type->deleted = new stdClass();
+        $compiled->$type->conflicts = new stdClass();
+    }
+
+
+    //  Check for ID conflicts and resolve
+    //  The following nested loops iterate over every type/status combination
+    //    - Server data is compared against the client data first
+    //      - Conflicts are removed from the client data array and added to the `$compiled` array regardless of conflict rank
+    //    - Any client data remaining in `$recon` is then checked against the server data
+    //
+    //  After the entire reconciliation algorithm is complete:
+    //    - `$jdat` will be encoded and re-written to the server data file
+    //    - `$compiled` will be returned to the client with changes since its last sync, including unresolved conflicts
+    //  Therefore every data instance created/modified since the last sync should be sorted into one of these two containers
+    $server = new stdClass();
+    foreach($compiled as $type => $typeArr) {
+        echo $type . '<br />';
+        //  Skip `$compiled->hash` which is a `number`
+        if(!is_object($typeArr)) {
+            continue;
+        }
+
+        //  Select instances from `$jdat` that have been created, modified, or deleted since `$lastSync`
+        $server->$type = new stdClass();
+        foreach ($jdat->$type as $serverInst) {
+            //  Note that `$type` values are coming from `$compiled` so no need to check for `$type === "deleted"`
+            $id = $serverInst->_created;
+
+            //  Check if the instance was created since `$lastSync`
+            //  If not, check if it was modified since `$lastSync`
+            if ($id > $lastSync) {
+                if (!isset($server->$type->new)) {
+                    $server->$type->new = new stdClass();
+                }
+                $server->$type->new->$id = $serverInst;
+            } else if ((isset($serverInst->_modified) && $serverInst->_modified > $lastSync)) {
+                if (!isset($server->$type->modified)) {
+                    $server->$type->modified = new stdClass();
+                }
+                $server->$type->modified->$id = $serverInst;
+            }
+        }
+        foreach ($jdat->deleted->$type as $serverInst) {
+            $id = $serverInst->_created;
+
+            //  Check if the instance was deleted since `$lastSync`
+            if ($serverInst->_deleted > $lastSync) {
+                if (!isset($server->$type->deleted)) {
+                    $server->$type->deleted = new stdClass();
+                }
+                $server->$type->deleted->$id = $serverInst;
+            }
+        }
+
+
+        //  Iterate through screened server data instances
+        //    - Compare with all instances received from the client
+        //      - If any matches, mark as indeterminate
+        //        - Check for matches by `$id`
+        //        - Check for matches by text
+        //        - Check for matches by text excluding timestamps
+        //      - If no matches, add to `$compiled`
+        foreach($server->$type as $serverStatus => $serverStatusArray) {
+            foreach($serverStatusArray as $id => $serverInst) {
+                //  Assign `$serverInst` to `$compiled` as if no conflict will be found
+                $compiled->$type->$serverStatus->$id = $serverInst;
+                if(!isset($recon->type))
+                    continue;
+
+                //  Check for conflicts and move `$serverInst` accordingly
+                foreach($recon->$type as $clientStatus => $clientStatusArray) {
+                    //  If not conflict exists, move on to the next client status
+                    if(isset($clientStatusArray->$id)) {
+                        //  Assign local reference to matching instance in `$clientStatusArray`
+                        $clientInst = $clientStatusArray->$id;
+
+                        //  Assign conflicting instances to the 'conflicts' array based on `$type`
+                        //  `$serverInst` will always be the first instance in this array
+                        if(is_array($compiled->$type->conflicts->$id)) {
+                            //  If the conflicts array has already been defined, just push the new instance
+                            $compiled->$type->conflicts->$id[] = $clientInst;
+                        }
+                        else {
+                            //  If this is the first conflict for this id:
+                            //    - Create a conflict array containing the two instances
+                            //    - Remove `$serverInst` from the non-conflict location in `$compiled`
+                            $compiled->$type->conflicts->$id = array($serverInst, $clientInst);
+                            unset($compiled->$type->$serverStatus->$id);
+                        }
+
+                        //  Remove the matching instance from the client data array
+                        unset($clientStatusArray->$id);
+                    }
+                    /*else {
+                        //  Check JSON text excluding timestamps
+                        $serverClone = clone $serverInst;
+                        $clientClone = clone $clientInst;
+
+                        //  If match is found excluding timestamps, evaluate timestamps:
+                        //    - If equal, mark as resolved with server value
+                        //    - If not equal, mark as conflict to confirm duplicate on client
+
+                        //  Remove the matching instance from the client data array
+                        unset($clientStatusArray->$id);
+                    }*/
+                }
+            }
+        }
+
+        //  Iterate through remaining client data instances
+        //    - Compare with all instances stored on the server
+        //    - Assign a resolved value of each into `$jdat` or `$compiled`
+        if(isset($recon->$type) && isset($recon->$type->new)) {
+            foreach($recon->$type->new as $id => $clientInst) {
+                $conflicts = array_filter($jdat->$type, function($val) use ($id) {return $val->_created === $id;});
+                if(count($conflicts) > 0) {
+                    array_unshift($conflicts, $clientInst);
+                    $compiled->$type->conflicts->$id = $conflicts;
+                }
+                else {
+                    array_unshift($jdat->$type, $clientInst);
+
+                }
+            }
+        }
+        if(isset($recon->$type) && isset($recon->$type->modified)) {
+            foreach($recon->$type->modified as $id => $clientInst) {
+                $matches = array_filter($jdat->$type, function($val) use ($id) {return $val->_created === $id;});
+                if(count($matches) === 0) {
+                    $compiled->$type->conflicts->$id = array($clientInst);
+                    //  If another instance has already been deleted, add it to the conflicts list
+                    $deleted = array_filter($jdat->deleted->$type, function($val) use ($id) {return $val->_created === $id;});
+                    if(count($deleted) > 0) {
+                        array_splice($compiled->$type->conflicts->$id, 0, 0, $deleted);
+                    }
+                }
+                else if(count($matches) > 1) {
+                    array_push($matches, $clientInst);
+                    $compiled->$type->conflicts->$id = $matches;
+                }
+                else {
+                    $ind = array_search($matches[0], $jdat->$type);
+                    array_splice($jdat->$type, $ind, 1, $matches);
+                }
+            }
+        }
+        if(isset($recon->$type) && isset($recon->$type->deleted)) {
+            foreach($recon->$type->deleted as $id => $clientInst) {
+                $matches = array_filter($jdat->$type, function($val) use ($id) {return $val->_created === $id;});
+                if(count($matches) === 0) {
+                    $compiled->$type->conflicts->$id = array($clientInst);
+                }
+                else if(count($matches) > 1) {
+                    array_push($matches, $clientInst);
+                    $compiled->$type->conflicts->$id = $matches;
+                }
+                else {
+                    $ind = array_search($jdat->$type, $clientInst);
+                    array_splice($jdat->$type, $ind, 1);
+                    array_unshift($jdat->deleted->$type, $clientInst);
+                }
+            }
+        }
+        /*foreach($recon->$type as $clientStatus => $clientStatusArray) {
+            foreach($clientStatusArray as $id => $clientInst) {
+                //  Add the new client instance to the beginning of the server array as if no conflicts will be found
+                foreach($jdat->$type as $serverTypeArray) {
+                    array_shift($serverTypeArray, $clientInst);
+                    foreach($serverTypeArray as $ind => $serverInst) {
+                        if($serverInst->_created !== $id) {
+                            continue;
+                        }
+
+                        //  If a conflict is found, relocate the client instance from the beginning of the array to the location of the matched server instance
+                    }
+                }
+            }
+        }*/
+    }
+
+    //  Save new client activity to disk
+    //  All server instances modified since `$lastSync` were removed from `$recon` in `classifyServerInstance()`
+    //  The outer loop runs for each category of data -- new, modified, deleted -- and an inner loop should define unique treatment for each category, if necessary
+    foreach($recon->ingredients as $category) {
+        //  Check for ID conflicts in data file
+    }
 
     //  MAKE SURE $jdat REFLECTS ALL CHANGES BEFORE COMPUTING HASH IN FOLLOWING COMMAND
 
@@ -35,7 +249,6 @@ function reconcile($data) {
     $newHash = getHash();
 
     //   Return selected activity and new hash
-    $compiled = array("new" => array(), "modified" => array(), "deleted" => array(), "hash" => array());
     return json_encode($compiled, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 }
 
@@ -63,9 +276,9 @@ switch($query) {
     case "reconcile":
         echo reconcile($request->data);
         break;
-//    case "add":
-//        echo saveNew($request->data);
-//        break;
+    case "add":
+        echo saveNew($request->data);
+        break;
 //    case "edit":
 //        echo modify($request->data);
 //        break;

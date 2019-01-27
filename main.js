@@ -3,12 +3,17 @@ function main() {
     window.weekdayNames = ['Sun', 'Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat'];
     window.BREAKFAST = 0, window.BRUNCH = 1, window.LUNCH = 2, window.SNACK = 3, window.DINNER = 4, window.WORKOUT = 5;
 
-    MealPlan.prototype.data = new DataStorage();
     MealPlan.endi = endianness();
+
+    MealPlan.prototype.data = new DataStorage();
+    RecipeIndex.prototype.data = MealPlan.prototype.data;
 
     window.plan = new MealPlan();
     plan.initialize().then(function() {
-        saveData();
+        // saveData();
+    })
+    .catch(function(reason) {
+        console.warn(`Initialization failed with reason: ${reason}`);
     });
 
     // saveData();
@@ -201,7 +206,6 @@ function saveData() {
         lunch: onePotChickenKorma,
         snack: bircherMuesli,
         dinner: friedFishCurriedSpinach,
-        workout: null
     });
 
 
@@ -232,7 +236,6 @@ function saveData() {
         lunch: chaoticSalmon,
         snack: quickZucchiniParmesanHash,
         dinner: whiteBeanSoupSmokedTofu,
-        workout: null
     });
 
 
@@ -725,7 +728,6 @@ function saveData() {
         dinner: healthierQuesadilla,
         workout: bananaQuark
     });
-    plan.saveRecipe(kiwiVanillaOats);
 
 
     //  Tuesday 1/8
@@ -820,6 +822,7 @@ function saveData() {
         dinner: sarasChickpeaWalnutTacos,
         workout: tunaCornWrap
     });
+    // plan.saveRecipe(oatsBlackberryJam);
 
 
     //  Thursday 1/10
@@ -844,8 +847,25 @@ function saveData() {
         dinner: beetrootCarpaccio
     });
 
+    //  This loop assigns all unique recipes to a global index (object literal, keyed by recipe title)
+    window.index = [];
+    for(let day of plans) {
+        for(let meal in day) {
+            let recipe = day[meal];
+            if(recipe instanceof Date)
+                continue;
+
+            let ind = window.index.findIndex(el => el.recipe.title === recipe.title);
+            if(ind < 0)
+                window.index.push({recipe: recipe, count: 1});
+            else
+                window.index[ind].count++;
+        }
+    }
+    window.index.sort((a,b) => b.count - a.count);
+
     //  These loops aggregate ingredients over a given time period and print sums to the console
-    let shoppingList = [];
+    /*let shoppingList = [];
     let week = {
         start: new Date(2019, 0, 6),
         end: new Date(2019, 0, 9)
@@ -908,7 +928,7 @@ function saveData() {
         i++;
     }
     shoppingList.sort((a,b) => {if(a.name === b.name){return a.unit > b.unit} return a.name.toLowerCase() > b.name.toLowerCase()});
-    console.log(`shopping list for ${week.start.toLocaleDateString()} through ${week.end.toLocaleDateString()}:`);
+    console.log(`shopping list for ${week.start.toLocaleDateString()} through ${week.end.toLocaleDateString()}:`);*/
 
     // let str = 'ingredient,unit,qty\n';
     // for(let item of shoppingList)

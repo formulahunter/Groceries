@@ -11,9 +11,22 @@ class Ingredient {
         if(!qty || typeof qty !== 'number')
             console.log(`No quantity provided for new Ingredient instance`);
 
+        this._created = false;
+        this._modified = false;
+
         this._name = name || '';
         this._unit = unit || '';
         this._qty = qty || false;
+    }
+
+    static fromJSON(jobj) {
+        let inst = new Ingredient(jobj._name, jobj._unit, jobj._qty);
+
+        inst._created = jobj._created;
+        if(jobj._modified)
+            inst._modified = jobj._modified;
+
+        return inst;
     }
 
     get name() {
@@ -60,10 +73,13 @@ class Ingredient {
         };
 
         let jobj = {
+            _created: this._created,
             _name: replacer(this._name),
             _unit: this._unit,
             _qty: this._qty
         };
+        if(this._modified)
+            jobj._modified = this._modified;
 
         return jobj;
     }

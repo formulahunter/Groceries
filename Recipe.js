@@ -7,10 +7,35 @@ class Recipe {
         if(!title || title === '')
             throw new TypeError('Argument to `Recipe` constructor must be a non-empty string');
 
-        this.id = false;
+        this._created = false;
+        this._modified = false;
+
         this.title = title;
         this.ingredients = [];
         this.instructions = [];
+    }
+
+    static fromJSON(jobj) {
+        let inst = new Recipe(jobj.title);
+
+        inst._created = jobj._created;
+        if(jobj._modified)
+            inst._modified = jobj._modified;
+
+        for(let ingd of jobj.ingredients) {
+            inst.ingredients.push(Ingredient.fromJSON(ingd));
+        }
+        inst.ingredients.sort((a,b) => a.title > b.title ? 1 : -1);
+
+        for(let inst of jobj.instructions) {
+            inst.instructions.push(inst);
+        }
+
+        return inst;
+    }
+
+    get id() {
+        return this._created;
     }
 
     addIngredient(ingd) {
@@ -37,7 +62,7 @@ class Recipe {
     }
 
     toString() {
-        return this.title;
+        return `Recipe:{"${this.title}"}`;
     }
     toJSON() {
         //  `replacer()` is used to substitute certain values with other values to be serialized
@@ -60,10 +85,13 @@ class Recipe {
         this.instructions.forEach(val => instructions.push(val.toJSON()));
 
         let jobj = {
+            _created: this._created,
             title: replacer(this.title),
             ingredients: ingredients,
             instructions: instructions
         };
+        if(this._modified)
+            jobj._modified = this._modified;
 
         return jobj;
     }
