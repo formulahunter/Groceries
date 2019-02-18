@@ -16,6 +16,38 @@ class DataStorage {
                 this.deleted[key] = [];
             }
         }
+
+        this._maxID = 0;
+    }
+
+
+    get lastSync() {
+        let sync = localStorage.getItem(`${DataStorage.key}-sync`);
+        if(sync === null)
+            return 0;
+
+        return Number(this.decrypt(sync));
+    }
+    set lastSync(sync) {
+        if(sync === true || sync === false || sync === null)
+            throw new TypeError('.lastSync cannot be `true`, `false`, or `null`');
+        if(Array.isArray(sync))
+            throw new TypeError('.lastSync cannot be an array');
+        if(Number.isNaN(Number(sync)) || !Number.isInteger(Number(sync)))
+            throw new TypeError('.lastSync must be an integer, or a string that can be parsed to an integer');
+
+        localStorage.setItem(`${DataStorage.key}-sync`, this.encrypt(sync));
+    }
+
+
+    newID() {
+        let id = Date.now();
+        if(id <= this._maxID)
+            id = this._maxID + 1;
+
+        this._maxID = id;
+
+        return id;
     }
 
 
@@ -45,11 +77,11 @@ class DataStorage {
     write(/* string */ key, /* string */ data) {
         //  Sync data before write
         try {
-            // this.sync().then(function(result) {
-            //     if(result === false)
-            //         Promise.reject(`Unable to sync data -- aborting write to key '${key}'`);
-            //
-            // });
+            /*this.sync().then(function(result) {
+                if(result === false)
+                    Promise.reject(`Unable to sync data -- aborting write to key '${key}'`);
+
+            });*/
             this.sync();
             console.info(`Data synchronized in preparation for write to key '${key}'`);
         }
@@ -62,7 +94,7 @@ class DataStorage {
             // console.warn(er);
         }
 
-        let str = plan.data.encrypt(data);
+        let str = this.encrypt(data);
 
         try {
             this.setLocal(key, str);
@@ -108,28 +140,33 @@ class DataStorage {
         // console.debug('local hash:');
         // console.debug(local);
 
-        return Promise.all([remote, local]).then((function([remote, local]) {
-            if(local === remote) {
-                let now = new Date;
-                this.setLocal(`${DataStorage.key}-sync`, now.getTime().toString());
-                console.info('Local and remote data synchronized');
-                console.debug(`Successful sync on ${now.toLocaleString()}\nTimestamp: ${now.getTime()}`);
+        return Promise.all([remote, local])
+        .then((function([remote, local]) {
+            if (local !== remote) {
+                console.info('Data discrepancy found -- attempting to reconcile');
 
-                return Promise.resolve(true);
+                //  Initiate data reconciliation
+                //  The promise returned by `reconcile()` must be returned directly so that the implementing class can evaluate the result
+                //  E.g. if new data instances were downloaded from the server, the implementing class must be able to load those instances
+                return this.reconcile()/*.then(function(result) {
+                    if(!result) {
+                        console.warn('Unable to reconcile data discrepancy');
+                        return Promise.reject(false);
+                    }
+
+                    console.info('Data discrepancy resolved');
+                    console.info('Local and remote data synchronized');
+                    return Promise.resolve(true);
+                })*/;
             }
 
-            //  Initiate data reconciliation
-            console.info('Data discrepancy found -- attempting to reconcile');
-            return this.reconcile().then(function(result) {
-                if(!result) {
-                    console.warn('Unable to reconcile data discrepancy');
-                    return Promise.reject(false);
-                }
+            let now = new Date;
+            this.lastSync = now.getTime();
+            console.info('Local and remote data synchronized');
+            console.debug(`Successful sync on ${now.toLocaleString()}\nTimestamp: ${now.getTime()}`);
 
-                console.info('Data discrepancy resolved');
-                console.info('Local and remote data synchronized');
-                return Promise.resolve(true);
-            });
+            return Promise.resolve(true);
+
         }).bind(this))
         .catch(function(reason) {
             console.warn(`Error encountered while synchronizing local and server data files: ${reason}`);
@@ -157,7 +194,7 @@ class DataStorage {
 
         /**  Query local storage for most recent successful sync
          */
-        let lastSync = Number(this.read(`${DataStorage.key}-sync`));
+        let lastSync = this.lastSync;
 
         /**  Compile local changes since last sync
          *   - To allow greater flexibility in extending DataStorage, this method will check members of every array defined on an own-property key
@@ -236,42 +273,23 @@ class DataStorage {
             value: 'application/json;charset=UTF-8'
         }];
 
-        /*return this.xhrPost(data, url, headers).then(function(response) {
+        console.info('Data to be sent to reconciliation script: %o', data);
+        // alert(`Data to be sent to reconciliation script: \n${JSON.stringify(data)}`);
+        return this.xhrPost(data, url, headers).then((function(response) {
             //  Parse JSON text returned by server
             let data = JSON.parse(response);
 
-            //  Add new transactions
-            data.new.forEach(function(newTxn) {
-                // let txn = Transaction.fromJSON(newTxn);
-                // try {
-                //     Finance.addTransaction(txn);
-                // }
-                // catch(er) {
-                //     alert(`Error adding new transaction: ${er}`);
-                // }
-                // alert(txn.title);
-            });
-
-            //  Replace modified transactions
-            data.modified.forEach(function(modTxn) {
-                // let txn = Transaction.fromJSON(modTxn);
-                // Finance.replaceTransaction(txn);
-            });
-
-            //  Remove deleted transactions
-            data.deleted.forEach(function(created) {
-                // Finance.removeTransaction(created);
-            });
-
-            //	Sort transactions most recent first (lower index)
-            // Finance.sortTransactions();
+            //  If server returned updated data instances, use them as the resolved value
+            //  Server will always return an object with the `hash` property
+            //  REFER TO THE `.then()` FUNCTION IMMEDIATELY AFTER `.sync()` IN `dataInit()`
+            if(Object.keys(data).length > 1) {
+                return Promise.reject(data);
+            }
 
             //  Compare the new local and remote hashes
             //  Assume both have changed
             return this.hash() === data.hash;
-        }.bind(this));*/
-        console.warn('Data to be sent to reconciliation script: %o', data);
-        alert(`Data to be sent to reconciliation script: \n${JSON.stringify(data)}`);
+        }).bind(this));
     }
 
 

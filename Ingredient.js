@@ -84,6 +84,6 @@ class Ingredient {
         return jobj;
     }
     toString() {
-        return this.name;
+        return `Ingredient:{"${this.name}"}`;
     }
 }

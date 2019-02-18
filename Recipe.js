@@ -61,9 +61,6 @@ class Recipe {
         return this.instructions.length;
     }
 
-    toString() {
-        return `Recipe:{"${this.title}"}`;
-    }
     toJSON() {
         //  `replacer()` is used to substitute certain values with other values to be serialized
         //  Substitutions are entirely arbitrary
@@ -79,7 +76,7 @@ class Recipe {
         };
 
         let ingredients = [];
-        this.ingredients.forEach(val => ingredients.push(val.toJSON()));
+        this.ingredients.forEach(val => ingredients.push(val.name));
 
         let instructions = [];
         this.instructions.forEach(val => instructions.push(val.toJSON()));
@@ -94,5 +91,8 @@ class Recipe {
             jobj._modified = this._modified;
 
         return jobj;
+    }
+    toString() {
+        return `Recipe:{"${this.title}"}`;
     }
 }

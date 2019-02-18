@@ -30,6 +30,14 @@ abstract class IDConflict
     }
 }*/
 
+$test = new stdClass();
+$test->new = new stdClass();
+$test->new->{454} = 'test1';
+$test->new->{455} = 'test1';
+$test->new->{445654} = 'test1';
+$test->new->{457} = 'test1';
+echo count(get_object_vars($test->new)) . '<br /><br />';
+
 echo '<h1>START</h1>';
 
 $jdat = json_decode(file_get_contents('data/mealplan.json'));

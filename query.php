@@ -1,12 +1,17 @@
 <?php
 
-$jdat = json_decode(file_get_contents('data/mealplan.json'));
+$file = json_decode(file_get_contents('data/mealplan.json'));
 
 function getHash() {
-    global $jdat;
+    global $file;
 
-    unset($jdat->deleted);
-    $jstr = json_encode($jdat, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+    //  Save a shallow copy of `$file` for manipulation without interfering with file contents
+    $copy = clone $file;
+
+    //  Remove the deleted list from the JSON object and encode the resulting data for hashing
+    unset($copy->deleted);
+    $jstr = json_encode($copy, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+    file_put_contents('output.json', $jstr);
 
     //  json_encode() automatically removes whitespaces (spaces, tabs, newlines) in its return string
     //  Even if the data file is formatted for easy inspection in WebStorm, the hash value should compute correctly
@@ -17,10 +22,10 @@ function reconcile($data) {
 /*
     DATA RECONCILIATION
     Data reconciliation is based on three inputs: lastSync, data provided by the client, and data saved on the server
-     - `$recon` is the 'instances' data passed from the client, assumed to all be after `$lasySync`
-     - The entire data file is retained in `$jdat`
+     - `$recon` is the 'instances' data passed from the client, assumed to all be after `$lastSync`
+     - The entire data file is retained in `$file`
      - `$compiled` is where the results are compiled to be returned to the client
-     - Each data instance in `$jdat` is screened against `$lastSync` and earlier instances are ignored
+     - Each data instance in `$file` is screened against `$lastSync` and earlier instances are ignored
      - Instance ID's are checked against the ID's provided by the client -- instances indicated as new, modified, and deleted are all cross-checked
      - All ID's that do not match one received from the client are added to the `$compiled` list in the appropriate category
      - All matches are checked for most recent modification relative to '$lastSync'
@@ -29,7 +34,7 @@ function reconcile($data) {
         - Else both have changed since, and both are added to the appropriate 'conflicts' list
      - Server data file is iterated first; cleared instances are removed from `$recon`; then any remaining instances in `$recon` are cleared against the same algorithm
 */
-    global $jdat;
+    global $file;
 
     //  Retrieve 'lastSync' and 'pushed'
     $lastSync = $data->lastSync;
@@ -48,7 +53,7 @@ function reconcile($data) {
 
     //  `$compiled` is a container of containers for each data type/status combo, e.g. ingredients-new, ingredients-modified, etc.
     $compiled = new stdClass();
-    foreach($jdat as $type => $value) {
+    foreach($file as $type => $value) {
         if($type === "deleted")
             continue;
 
@@ -67,20 +72,19 @@ function reconcile($data) {
     //    - Any client data remaining in `$recon` is then checked against the server data
     //
     //  After the entire reconciliation algorithm is complete:
-    //    - `$jdat` will be encoded and re-written to the server data file
+    //    - `$file` will be encoded and re-written to the server data file
     //    - `$compiled` will be returned to the client with changes since its last sync, including unresolved conflicts
     //  Therefore every data instance created/modified since the last sync should be sorted into one of these two containers
     $server = new stdClass();
     foreach($compiled as $type => $typeArr) {
-        echo $type . '<br />';
         //  Skip `$compiled->hash` which is a `number`
         if(!is_object($typeArr)) {
             continue;
         }
 
-        //  Select instances from `$jdat` that have been created, modified, or deleted since `$lastSync`
+        //  Select instances from `$file` that have been created, modified, or deleted since `$lastSync`
         $server->$type = new stdClass();
-        foreach ($jdat->$type as $serverInst) {
+        foreach ($file->$type as $serverInst) {
             //  Note that `$type` values are coming from `$compiled` so no need to check for `$type === "deleted"`
             $id = $serverInst->_created;
 
@@ -98,7 +102,7 @@ function reconcile($data) {
                 $server->$type->modified->$id = $serverInst;
             }
         }
-        foreach ($jdat->deleted->$type as $serverInst) {
+        foreach ($file->deleted->$type as $serverInst) {
             $id = $serverInst->_created;
 
             //  Check if the instance was deleted since `$lastSync`
@@ -167,27 +171,27 @@ function reconcile($data) {
 
         //  Iterate through remaining client data instances
         //    - Compare with all instances stored on the server
-        //    - Assign a resolved value of each into `$jdat` or `$compiled`
+        //    - Assign a resolved value of each into `$file` or `$compiled`
         if(isset($recon->$type) && isset($recon->$type->new)) {
             foreach($recon->$type->new as $id => $clientInst) {
-                $conflicts = array_filter($jdat->$type, function($val) use ($id) {return $val->_created === $id;});
+                $conflicts = array_filter($file->$type, function($val) use ($id) {return $val->_created === $id;});
                 if(count($conflicts) > 0) {
                     array_unshift($conflicts, $clientInst);
                     $compiled->$type->conflicts->$id = $conflicts;
                 }
                 else {
-                    array_unshift($jdat->$type, $clientInst);
+                    array_unshift($file->$type, $clientInst);
 
                 }
             }
         }
         if(isset($recon->$type) && isset($recon->$type->modified)) {
             foreach($recon->$type->modified as $id => $clientInst) {
-                $matches = array_filter($jdat->$type, function($val) use ($id) {return $val->_created === $id;});
+                $matches = array_filter($file->$type, function($val) use ($id) {return $val->_created === $id;});
                 if(count($matches) === 0) {
                     $compiled->$type->conflicts->$id = array($clientInst);
                     //  If another instance has already been deleted, add it to the conflicts list
-                    $deleted = array_filter($jdat->deleted->$type, function($val) use ($id) {return $val->_created === $id;});
+                    $deleted = array_filter($file->deleted->$type, function($val) use ($id) {return $val->_created === $id;});
                     if(count($deleted) > 0) {
                         array_splice($compiled->$type->conflicts->$id, 0, 0, $deleted);
                     }
@@ -197,14 +201,14 @@ function reconcile($data) {
                     $compiled->$type->conflicts->$id = $matches;
                 }
                 else {
-                    $ind = array_search($matches[0], $jdat->$type);
-                    array_splice($jdat->$type, $ind, 1, $matches);
+                    $ind = array_search($matches[0], $file->$type);
+                    array_splice($file->$type, $ind, 1, $matches);
                 }
             }
         }
         if(isset($recon->$type) && isset($recon->$type->deleted)) {
             foreach($recon->$type->deleted as $id => $clientInst) {
-                $matches = array_filter($jdat->$type, function($val) use ($id) {return $val->_created === $id;});
+                $matches = array_filter($file->$type, function($val) use ($id) {return $val->_created === $id;});
                 if(count($matches) === 0) {
                     $compiled->$type->conflicts->$id = array($clientInst);
                 }
@@ -213,16 +217,16 @@ function reconcile($data) {
                     $compiled->$type->conflicts->$id = $matches;
                 }
                 else {
-                    $ind = array_search($jdat->$type, $clientInst);
-                    array_splice($jdat->$type, $ind, 1);
-                    array_unshift($jdat->deleted->$type, $clientInst);
+                    $ind = array_search($file->$type, $clientInst);
+                    array_splice($file->$type, $ind, 1);
+                    array_unshift($file->deleted->$type, $clientInst);
                 }
             }
         }
         /*foreach($recon->$type as $clientStatus => $clientStatusArray) {
             foreach($clientStatusArray as $id => $clientInst) {
                 //  Add the new client instance to the beginning of the server array as if no conflicts will be found
-                foreach($jdat->$type as $serverTypeArray) {
+                foreach($file->$type as $serverTypeArray) {
                     array_shift($serverTypeArray, $clientInst);
                     foreach($serverTypeArray as $ind => $serverInst) {
                         if($serverInst->_created !== $id) {
@@ -234,26 +238,64 @@ function reconcile($data) {
                 }
             }
         }*/
+
+        //  Clean up `$compiled` to minimize data transfer
+        foreach($compiled->$type as $status => $statusArray) {
+            if(count($compiled->$type->$status) === 0) {
+                unset($compiled->$type->$status);
+            }
+        }
+        if(count(get_object_vars($compiled->$type)) === 0) {
+            unset($compiled->$type);
+        }
     }
 
-    //  Save new client activity to disk
-    //  All server instances modified since `$lastSync` were removed from `$recon` in `classifyServerInstance()`
-    //  The outer loop runs for each category of data -- new, modified, deleted -- and an inner loop should define unique treatment for each category, if necessary
-    foreach($recon->ingredients as $category) {
-        //  Check for ID conflicts in data file
-    }
+    //  MAKE SURE $file REFLECTS ALL CHANGES BEFORE COMPUTING HASH IN FOLLOWING COMMAND
 
-    //  MAKE SURE $jdat REFLECTS ALL CHANGES BEFORE COMPUTING HASH IN FOLLOWING COMMAND
-
-    //   Compute new server hash
-    $newHash = getHash();
+    //   Compute new server hash and add to `$compiled`
+    $compiled->hash = getHash();
 
     //   Return selected activity and new hash
     return json_encode($compiled, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 }
 
-function saveNew($key, $inst) {
+function saveNew($key, $inst, $ind) {
+    global $file;
 
+    $typeArray = false;
+    switch($key) {
+        case 'ingredient':
+            $typeArray = $file->ingredients;
+            break;
+        case 'recipe':
+            $typeArray = $file->recipes;
+            break;
+        case 'meal':
+            $typeArray = $file->meals;
+            break;
+        case 'list':
+            $typeArray = $file->shoppingLists;
+            break;
+        /*case 'receipt':
+            $typeArray = $file->groceryReceipts;
+            break;*/
+        default:
+            die("Unknown data type \'$key\'");
+    }
+
+    //  Add new instance at given index
+    //  New array members to be added must be provided in a container array
+    //  Otherwise their properties are enumerated and added as key-value pairs
+    array_splice($typeArray, $ind, 0, array($inst));
+
+    //  Encode data object back to JSON string to write to file
+    $jstr = json_encode($file, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT);
+
+    //  Write new data string to file
+    file_put_contents('data/mealplan.json', $jstr);
+
+    //  Return new data hash
+    return getHash();
 }
 
 function modify() {
@@ -269,22 +311,22 @@ $query = $request->query;
 switch($query) {
 //    case "count":
 //        echo countTxn();
-//        break;
+//        return;
     case "hash":
         echo getHash();
-        break;
+        return;
     case "reconcile":
         echo reconcile($request->data);
-        break;
+        return;
     case "add":
-        echo saveNew($request->data);
-        break;
+        echo saveNew($request->type, $request->instance,  $request->index);
+        return;
 //    case "edit":
 //        echo modify($request->data);
-//        break;
+//        return;
 //    case "delete":
 //        echo remove($request->data);
-//        break;
+//        return;
 }
 
 //  SINGLE PHP FILE TO HANDLE HASH, COUNT, STAMPS, INSTANCES, NEW, RECONCILE

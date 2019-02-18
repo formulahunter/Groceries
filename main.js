@@ -7,6 +7,7 @@ function main() {
 
     MealPlan.prototype.data = new DataStorage();
     RecipeIndex.prototype.data = MealPlan.prototype.data;
+    Pantry.prototype.data = MealPlan.prototype.data;
 
     window.plan = new MealPlan();
     plan.initialize().then(function() {
@@ -943,34 +944,43 @@ function saveData() {
 
 class Pantry {
     constructor() {
-        this.ingredients = [];
+        // this.ingredients = [];
     }
 
     addIngredient(ingd) {
         //  Check if ingredient was already added and if so return its index
-        let ind = this.ingredients.findIndex(el => el.name === ingd.name);
+        let ind = this.data.ingredients.findIndex(el => el.name === ingd.name);
         if(ind >= 0) {
             console.info(`${ingd} has already been added to the pantry - it will not be added again`);
             return ind;
         }
 
-        ind = this.ingredients.findIndex(a => a.name === ingd.name);
+        ind = this.data.ingredients.findIndex(a => a.name === ingd.name);
         if(ind >= 0) {
-            console.debug(`Recipe title ${ingd.title} has multiple entries in the pantry`);
+            console.info(`${ingd} has already been added to the pantry - it will not be added again`);
+            return ind;
         }
 
         //  Add recipe to index array
-        this.ingredients.push(ingd);
+        this.data.ingredients.push(ingd);
 
         //  Sort the index and get the position of the new ingredient
-        this.ingredients.sort(Pantry.sortFun);
-        ind = this.ingredients.indexOf(ingd);
+        this.data.ingredients.sort(Pantry.sortFun);
+        ind = this.data.ingredients.indexOf(ingd);
 
         //  Return the new recipe's position in the index array
         return ind;
     }
+
+    getIngredient(name) {
+        return this.data.ingredients.find(a => a.name === name);
+    }
+
+    serialize() {
+        return JSON.stringify(this.data.ingredients);
+    }
 }
-Pantry.sortFun = (a, b) => (a.name > b.name? 1 : -1);
+Pantry.sortFun = (a, b) => (a.name > b.name ? 1 : (a.name < b.name ? -1 : 0));
 
 function downloadCSV(csv) {
     let filename = 'shopping list.csv';
