@@ -41,19 +41,19 @@ class Ingredient {
 
     set name(name) {
         if(typeof name !== 'string' || name === '')
-            console.log(`No value provided for Ingredient name`);
+            throw new TypeError(`No value provided for Ingredient name`);
 
         this._name = name;
     }
     set unit(unit) {
         if(typeof unit !== 'string' || unit === '')
-            console.log(`No value provided for Ingredient unit`);
+            throw new TypeError(`No value provided for Ingredient unit`);
 
         this._unit = unit;
     }
     set qty(qty) {
         if(typeof qty !== 'number')
-            console.log(`No value provided for Ingredient quantity`);
+            throw new TypeError(`No value provided for Ingredient quantity`);
 
         this._qty = qty;
     }

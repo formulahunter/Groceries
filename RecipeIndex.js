@@ -16,25 +16,25 @@ class RecipeIndex {
         this.container.appendChild(this.table);
     }
 
-    addEntry(recipe) {
+    addEntry(recipe, ind) {
         //  Check if recipe was already added and if so return its index
-        let ind = this.data.recipes.indexOf(recipe);
-        if(ind >= 0) {
-            console.info(`${recipe} has already been added to the index - it will not be added again`);
-            return ind;
-        }
-
-        ind = this.data.recipes.findIndex(a => a.title === recipe.title);
-        if(ind >= 0) {
-            console.debug(`Recipe title ${recipe.title} has multiple entries in the index`);
-        }
-
-        //  Add recipe to index array
-        this.data.recipes.push(recipe);
-
-        //  Sort the index and get the position of the new recipe
-        this.data.recipes.sort(RecipeIndex.sortFun);
-        ind = this.data.recipes.indexOf(recipe);
+        // let ind = this.data.recipes.indexOf(recipe);
+        // if(ind >= 0) {
+        //     console.info(`${recipe} has already been added to the index - it will not be added again`);
+        //     return ind;
+        // }
+        //
+        // ind = this.data.recipes.findIndex(a => a.title === recipe.title);
+        // if(ind >= 0) {
+        //     console.debug(`Recipe title ${recipe.title} has multiple entries in the index`);
+        // }
+        //
+        // //  Add recipe to index array
+        // this.data.recipes.push(recipe);
+        //
+        // //  Sort the index and get the position of the new recipe
+        // this.data.recipes.sort(RecipeIndex.sortFun);
+        // ind = this.data.recipes.indexOf(recipe);
 
         //  Create a new table row at the same position
         let titleRow = this.table.insertRow(ind);
@@ -42,13 +42,10 @@ class RecipeIndex {
         //  Add the recipe title to a cell in the title row
         titleRow.insertCell(0).innerHTML = recipe.title;
         titleRow.cells[0].className = "recipe";
-
-        //  Return the new recipe's position in the index array
-        return ind;
     }
 
     serialize() {
-        return JSON.stringify(this.data.recipes);
+        return JSON.stringify(this.data.types.recipes);
     }
 
     init() {

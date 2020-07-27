@@ -18,6 +18,25 @@ function getHash() {
     return hash('sha256', $jstr);
 }
 
+
+/** RECONCILE
+ *  1) Resources: server data file, instances sent from client, list successful sync
+ *     a) Define a container to store results that need to be returned to the client upon completion
+ *  2) Screen all server data against last-sync date; organize as created-since, modified-since, or deleted-since
+ *  3) For all screened data instances, search for a match among the client instances
+ *     a) If no match, add to the 'return' container as non-conflict
+ *     b) If a match is found, remove it from the client list and add both to the 'return' container as conflicting
+ *  4) For all remaining instances in the data sent from the client, search for a match among *entire* data file
+ *     a) Update the data file as necessary based on rank (new, modified, deleted) of client instance
+ *  5) Overwrite the server data file to reflect any changes that were made
+ *  6) Compute the new server hash digest and return it, along with any data updates, to the client
+ *
+ *  ***Always give priority to the server's data to pushed resolutions outward rather than pull conflicts inward
+ *
+ *
+ * @param $data
+ * @return false|string
+ */
 function reconcile($data) {
 /*
     DATA RECONCILIATION
@@ -54,7 +73,7 @@ function reconcile($data) {
     //  `$compiled` is a container of containers for each data type/status combo, e.g. ingredients-new, ingredients-modified, etc.
     $compiled = new stdClass();
     foreach($file as $type => $value) {
-        if($type === "deleted")
+        if($type === 'deleted')
             continue;
 
         $compiled->$type = new stdClass();
@@ -181,7 +200,6 @@ function reconcile($data) {
                 }
                 else {
                     array_unshift($file->$type, $clientInst);
-
                 }
             }
         }
@@ -250,8 +268,9 @@ function reconcile($data) {
         }
     }
 
-    //  MAKE SURE $file REFLECTS ALL CHANGES BEFORE COMPUTING HASH IN FOLLOWING COMMAND
+    //  Write all changes to disk
 
+    //  MAKE SURE $file REFLECTS ALL CHANGES BEFORE COMPUTING HASH IN FOLLOWING COMMAND
     //   Compute new server hash and add to `$compiled`
     $compiled->hash = getHash();
 
@@ -259,28 +278,33 @@ function reconcile($data) {
     return json_encode($compiled, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 }
 
-function saveNew($key, $inst, $ind) {
+function saveNew($type, $inst, $ind) {
     global $file;
 
     $typeArray = false;
-    switch($key) {
+    switch($type) {
         case 'ingredient':
-            $typeArray = $file->ingredients;
+        case 'ingredients':
+            $typeArray = &$file->ingredients;
             break;
         case 'recipe':
-            $typeArray = $file->recipes;
+        case 'recipes':
+            $typeArray = &$file->recipes;
             break;
         case 'meal':
-            $typeArray = $file->meals;
+        case 'meals':
+            $typeArray = &$file->meals;
             break;
         case 'list':
-            $typeArray = $file->shoppingLists;
+        case 'lists':
+            $typeArray = &$file->lists;
             break;
         /*case 'receipt':
-            $typeArray = $file->groceryReceipts;
+        /*case 'receipts':
+            $typeArray = &$file->receipts;
             break;*/
         default:
-            die("Unknown data type \'$key\'");
+            die("Unknown data type \'$type\'");
     }
 
     //  Add new instance at given index
@@ -319,7 +343,7 @@ switch($query) {
         echo reconcile($request->data);
         return;
     case "add":
-        echo saveNew($request->type, $request->instance,  $request->index);
+        echo saveNew($request->type, $request->instance, $request->index);
         return;
 //    case "edit":
 //        echo modify($request->data);

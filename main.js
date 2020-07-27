@@ -5,7 +5,7 @@ function main() {
 
     MealPlan.endi = endianness();
 
-    MealPlan.prototype.data = new DataStorage();
+    MealPlan.prototype.data = new DataStorage('mealplan', ['ingredients', 'recipes', 'meals', 'lists', 'receipts']);
     RecipeIndex.prototype.data = MealPlan.prototype.data;
     Pantry.prototype.data = MealPlan.prototype.data;
 
@@ -949,35 +949,29 @@ class Pantry {
 
     addIngredient(ingd) {
         //  Check if ingredient was already added and if so return its index
-        let ind = this.data.ingredients.findIndex(el => el.name === ingd.name);
-        if(ind >= 0) {
-            console.info(`${ingd} has already been added to the pantry - it will not be added again`);
-            return ind;
-        }
-
-        ind = this.data.ingredients.findIndex(a => a.name === ingd.name);
+        let ind = this.data.types.ingredients.findIndex(el => el.name === ingd.name);
         if(ind >= 0) {
             console.info(`${ingd} has already been added to the pantry - it will not be added again`);
             return ind;
         }
 
         //  Add recipe to index array
-        this.data.ingredients.push(ingd);
+        this.data.types.ingredients.push(ingd);
 
         //  Sort the index and get the position of the new ingredient
-        this.data.ingredients.sort(Pantry.sortFun);
-        ind = this.data.ingredients.indexOf(ingd);
+        this.data.types.ingredients.sort(Pantry.sortFun);
+        ind = this.data.types.ingredients.indexOf(ingd);
 
         //  Return the new recipe's position in the index array
         return ind;
     }
 
     getIngredient(name) {
-        return this.data.ingredients.find(a => a.name === name);
+        return this.data.types.ingredients.find(a => a.name === name);
     }
 
     serialize() {
-        return JSON.stringify(this.data.ingredients);
+        return JSON.stringify(this.data.types.ingredients);
     }
 }
 Pantry.sortFun = (a, b) => (a.name > b.name ? 1 : (a.name < b.name ? -1 : 0));

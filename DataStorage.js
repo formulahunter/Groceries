@@ -3,43 +3,86 @@
  */
 
 class DataStorage {
-    constructor() {
-        this.ingredients = [];
-        this.recipes = [];
-        this.meals = [];
-        this.groceryList = [];
-        this.groceryReceipts = [];
+    /** Constructor
+     *
+     * @param {string} key
+     * @param {string[]} types
+     *
+     * @returns {DataStorage}
+     */
+    constructor(key, types) {
+        this.key = key;
+
+        this.types = {};
+        for(let key of types) {
+            this.types[key] = [];
+        }
 
         this.deleted = {};
-        for(let key in this) {
-            if(this.hasOwnProperty(key) && Array.isArray(this[key])) {
-                this.deleted[key] = [];
-            }
+        for(let key of types) {
+            this.deleted[key] = [];
         }
 
         this._maxID = 0;
     }
 
 
+    /** For consistently retrieving a single string with all project data
+     *
+     * @returns {string}
+     */
+    get dataString() {
+        console.log('types = %o', this.types);
+        try {
+            return this.serialize(this.types);
+        }
+        catch(er) {
+            throw new Error(`Error serializing data in memory:\n${er}`);
+        }
+    }
+
+
+    /** Get timestamp of the most recent successful sync
+     *
+     * @returns {number}
+     */
     get lastSync() {
-        let sync = localStorage.getItem(`${DataStorage.key}-sync`);
-        if(sync === null)
-            return 0;
+        try {
+            let sync = localStorage.getItem(`${this.key}-sync`);
+            if(sync === null)
+                return 0;
 
-        return Number(this.decrypt(sync));
+            return Number(this.decrypt(sync));
+        }
+        catch(er) {
+            throw new Error(`Error reading last-sync parameter from local storage:\n${er}`);
+        }
     }
+
+    /** Set timestamp of the most recent successful sync
+     *
+     * @param {number} sync
+     */
     set lastSync(sync) {
-        if(sync === true || sync === false || sync === null)
-            throw new TypeError('.lastSync cannot be `true`, `false`, or `null`');
-        if(Array.isArray(sync))
-            throw new TypeError('.lastSync cannot be an array');
-        if(Number.isNaN(Number(sync)) || !Number.isInteger(Number(sync)))
-            throw new TypeError('.lastSync must be an integer, or a string that can be parsed to an integer');
+        try {
+            if(sync === true || sync === false || sync === undefined || sync === null)
+                throw new TypeError('.lastSync cannot be `true`, `false`, `undefined`, or `null`');
+            if(Array.isArray(sync))
+                throw new TypeError('.lastSync cannot be an array');
+            if(Number.isNaN(Number(sync)) || !Number.isInteger(Number(sync)))
+                throw new TypeError('.lastSync must be an integer, or a string that can be parsed to an integer');
 
-        localStorage.setItem(`${DataStorage.key}-sync`, this.encrypt(sync));
+            localStorage.setItem(`${this.key}-sync`, this.encrypt(sync.toString()));
+        }
+        catch(er) {
+            throw new Error(`Error writing last-sync parameter ${sync} to local storage:\n${er}`);
+        }
     }
 
-
+    /** Ensure that no two data instances are assigned the same id during batch saves
+     *
+     * @returns {number}
+     */
     newID() {
         let id = Date.now();
         if(id <= this._maxID)
@@ -51,9 +94,108 @@ class DataStorage {
     }
 
 
+    /** Sync data automatically and return parsed JSON data objects
+     *
+     * @returns {object}
+     */
+    init() {
+        return this.sync()
+            .then((function(result) {
+                return Promise.resolve({
+                    sync: result.sync,
+                    hash: result.hash,
+                    resolve: result.resolve,
+                });
+            }).bind(this));
+    }
+
+
+    /** For incremental data instance additions
+     *
+     * @param {string} type
+     * @param {Object} inst
+     *
+     * @returns {Promise}
+     */
+    save(type, inst) {
+        //  Make sure `type` is in the plural form
+        if(!this.types[type])
+            if(this.types[`${type}s`])
+                type = `${type}s`;
+
+        if(!this.types[type] || !Array.isArray(this.types[type]))
+            throw new Error(`Unknown data type ${type} cannot be saved to data file`);
+
+        //  Check if instance has already been added
+        //  If so, return its index
+        let ind = this.types[type].indexOf(inst);
+        if(ind >= 0) {
+            console.info(`${type} instance ${inst} has already been added to the data file - it will not be added again`);
+            return Promise.resolve(ind);
+        }
+
+        //  Sync data before write
+        return this.sync()
+            .catch(function(reason) {
+                return Promise.reject(`Could not sync data before write:\n${reason}`);
+            })
+            .then((function(result) {
+                console.info(`Data synchronized in preparation for save '${type}'`);
+
+                //  Assign a new ID
+                //  If this method is used for saving modified instances:
+                //    - Set `_created` if it isn't already defined
+                //    - Otherwise set `_modified`
+                inst._created = this.newID();
+                console.debug(`${type} timestamp: ${inst._created}`);
+
+                //  Add instance to the type's container array
+                this.types[type].push(inst);
+
+                //  Sort the container array using the standard sort algorithm
+                this.types[type].sort((a, b) => a._created > b._created ? 1 : -1);
+
+                //  Get the index of the new data instance
+                ind = this.types[type].indexOf(inst);
+                console.log(`index: ${ind}`);
+
+                //  Write the new instance to local data cache
+                let local = this.write(`${this.key}-data`, this.dataString);
+
+                //  Write the new instance to remote data file
+                let data = {
+                    query: 'add',
+                    type: type,
+                    instance: inst,
+                    index: ind
+                };
+                let url = 'query.php';
+                let headers = [{
+                    header: 'content-type',
+                    value: 'application/json;charset=UTF-8'
+                }];
+                let remote = this.xhrPost(data, url, headers);
+
+                //  Confirm both data files are still in sync
+                return Promise.all([local, remote]).then((function([localHash, remoteHash]) {
+                    console.debug(`local: ${localHash}\nremote: ${remoteHash}`);
+                    return this.sync(localHash, remoteHash)
+                        .then(function(result) {
+                            return Promise.resolve(ind);
+                        });
+                }).bind(this))
+                    .catch(function(reason) {
+                        return Promise.reject(`Error saving new data:\n${reason}`);
+                    });
+            }));
+    }
+
+
     /** For local storage access
      *    Returns `null` if data in local storage is not truthy
      *    Otherwise returns result of decrypt()
+     *
+     * @param {string} key
      */
     read(key) {
         //  All local data is encrypted
@@ -66,46 +208,43 @@ class DataStorage {
             console.error(`Error retrieving data from local storage:\n${er}`);
         }
 
-        if(str === null)
-            return null;
+        if(str === null) {
+            let loadRemote = confirm(`No data stored locally under default data key ${key}\n\nLoad data file from server?`);
+            if(loadRemote) {
+                //  Load remote data file and save locally
+
+                //  Resolve to `true` if load/save was successful
+                //  Else reject with reason to indicate why sync failed
+                return Promise.reject('Loading remote data failed');
+            }
+
+            //  Reject with reason to indicate why sync failed
+            return Promise.reject('User elected to leave local data cache empty');
+        }
 
         return this.decrypt(str);
     }
     /** For local storage access
-     *    No return value
+     *
+     * @param {string} key
+     * @param {object} data
      */
-    write(/* string */ key, /* string */ data) {
-        //  Sync data before write
-        try {
-            /*this.sync().then(function(result) {
-                if(result === false)
-                    Promise.reject(`Unable to sync data -- aborting write to key '${key}'`);
-
-            });*/
-            this.sync();
-            console.info(`Data synchronized in preparation for write to key '${key}'`);
-        }
-        catch (er) {
-            // if (er instanceof DataReconcileError) {
-                console.error(er);
-                throw er;
-            // }
-
-            // console.warn(er);
-        }
-
+    write(key, data) {
         let str = this.encrypt(data);
 
         try {
             this.setLocal(key, str);
         }
         catch(er) {
-            alert(`Error writing data to local storage: ${er}`);
+            alert(`Error writing data to local storage:\n${er}`);
             console.error(`Error writing data to local storage:\n${er}`);
             throw er;
         }
 
-        return this.hash();
+        return this.hash()
+            .catch(function(reason) {
+                return Promise.reject(`Error during write operation:\n${reason}\nAborting write to key ${key}`);
+            });
     }
 
 
@@ -119,61 +258,85 @@ class DataStorage {
      *    Throw an exception on failure
      *
      */
-    sync() {
-        console.info('Syncing local and remote data files');
+    sync(local, remote) {
+        console.debug('Syncing local and remote data files');
 
         //  Remote hash
-        let data = {query: 'hash'};
-        let url = 'query.php';
-        let headers = [{
-            header: 'content-type',
-            value: 'application/json;charset=UTF-8'
-        }];
-        let remote = this.xhrPost(data, url, headers)
-            .then(function(result) {console.debug(`Remote data hash: ${result}`); return result;});
+        if(!remote) {
+            let data = {query: 'hash'};
+            let url = 'query.php';
+            let headers = [{
+                header: 'content-type',
+                value: 'application/json;charset=UTF-8'
+            }];
+            remote = this.xhrPost(data, url, headers)
+                .then(function(result) {
+                    console.debug(`Remote data hash: ${result}`);
+                    return Promise.resolve(result);
+                });
+        }
         // console.debug('remote hash:');
         // console.debug(remote);
 
         //  Local hash
-        let local = this.hash()
-            .then(function(result) {console.debug(`Local data hash: ${result}`); return result;});
+        if(!local) {
+            local = this.hash()
+                .then(function(result) {
+                    console.debug(`Local data hash: ${result}`);
+                    return Promise.resolve(result);
+                });
+        }
         // console.debug('local hash:');
         // console.debug(local);
 
         return Promise.all([remote, local])
-        .then((function([remote, local]) {
-            if (local !== remote) {
-                console.info('Data discrepancy found -- attempting to reconcile');
-
-                //  Initiate data reconciliation
-                //  The promise returned by `reconcile()` must be returned directly so that the implementing class can evaluate the result
-                //  E.g. if new data instances were downloaded from the server, the implementing class must be able to load those instances
-                return this.reconcile()/*.then(function(result) {
-                    if(!result) {
-                        console.warn('Unable to reconcile data discrepancy');
-                        return Promise.reject(false);
-                    }
-
-                    console.info('Data discrepancy resolved');
-                    console.info('Local and remote data synchronized');
-                    return Promise.resolve(true);
-                })*/;
-            }
-
-            let now = new Date;
-            this.lastSync = now.getTime();
-            console.info('Local and remote data synchronized');
-            console.debug(`Successful sync on ${now.toLocaleString()}\nTimestamp: ${now.getTime()}`);
-
-            return Promise.resolve(true);
-
-        }).bind(this))
+        .then(this.checkForDiscrepancy.bind(this))
+        .then(this.resolve.bind(this))
+        .then(this.evaluateSyncResult.bind(this))
         .catch(function(reason) {
-            console.warn(`Error encountered while synchronizing local and server data files: ${reason}`);
-            throw (reason);
+            return Promise.reject(new Error(`Error encountered while synchronizing local and server data files:\n${reason}`));
         });
     }
-    reconcile() {
+    checkForDiscrepancy([remote, local]) {
+        //  If the two hash values match, then resolve with the value of the hash digest
+        //  If they don't match, attempt to reconcile the data files
+        if(local === remote)
+            return Promise.resolve({hash: remote});
+
+        console.info('Data discrepancy found -- attempting to reconcile');
+        console.debug(`local: ${local}\nremote: ${remote}`);
+
+        //  Initiate data reconciliation
+        //  Pass the local hash on to the reconcile method in case no new data is received from server
+        //  The reconcile method will always receive a new hash from the server, regardless of whether or not that data file changes
+        return this.reconcile(local);
+    }
+    evaluateSyncResult(result) {
+        //  If sync/reconcile was successful, result will be an object with the property `hash`
+        if(!result.hash)
+            return Promise.reject(new Error(`Unknown data reconciliation result: ${result.toString()}`));
+
+        let now = new Date;
+        let time = now.getTime();
+        this.lastSync = time;
+        console.info('Local and remote data synchronized');
+        console.debug(`Successful sync on ${now.toLocaleString()}\nTimestamp: ${time}`);
+
+        //  Define the `sync` property on `result` and resolve the `sync()`
+        result.sync = time;
+        return Promise.resolve(result);
+    }
+
+
+    /** Data reconciliation
+     *    `reconcile()` returns a Promise that is either rejected with an Error or resolves to an object literal
+     *      - If no new data was received from the server, this object has one property, `hash`, equal to the hash of the server's data file
+     *      - If the server returned new data to be saved locally, this object has one property, `reconcile`, that is an index by type of the data instances to be saved locally
+     *
+     * @param {string} localHash
+     * @returns {Promise<T | never>}
+     */
+    reconcile(localHash) {
         //  Compile changes since lasySync: adds and edits, not deletes (not stored locally)
 
         //  Send to server resolve script
@@ -187,7 +350,7 @@ class DataStorage {
         //    - Add server activity to data structure
         //   - Compute new local hash
         //  Calculate new hash and compare with server
-        //  return false if inequal
+        //  Reject with reason if inequal
         //  return true
         //  NOTE THAT THIS METHOD PRESENTLY ONLY DOWNLOADS NEW DATA TO MATCH SERVER FILE
         //  DATA STORED LOCALLY THAT HAS NOT YET BEEN SYNCED TO SERVER WILL NOT BE RECONCILED
@@ -201,11 +364,12 @@ class DataStorage {
          *   - It is assumed that members of such arrays are data instances managed by the DatStorage instance
          */
         let instances = {};
-        for(let key in this) {
+        for(let key in this.types) {
             //  Iterate over own properties only
-            if(!this.hasOwnProperty(key))
+            if(!this.types.hasOwnProperty(key))
                 continue;
 
+            /*  No longer needed as of definition of `types` property
             //  Skip properties that aren't arrays
             if(!Array.isArray(this[key]))
                 continue;
@@ -213,6 +377,7 @@ class DataStorage {
             //  Skip the `deleted` key
             if(key === 'deleted')
                 continue;
+            */
 
             //  Associate data instances with the key they are defined on
             //  Organization of data in the remote repository depends on this association
@@ -227,7 +392,7 @@ class DataStorage {
             //  Add new and modified instances to the appropriate container array
             //  Note that instances that have been created *and* modified since last sync will be sent to the server as "new"
             //  Deleted instances will always be sent as "deleted"
-            for(let inst of this[key]) {
+            for(let inst of this.types[key]) {
                 if(inst._created > lastSync)
                     instances[key].new[inst.id] = inst;
                 else if(inst._modified > lastSync)
@@ -275,24 +440,149 @@ class DataStorage {
 
         console.info('Data to be sent to reconciliation script: %o', data);
         // alert(`Data to be sent to reconciliation script: \n${JSON.stringify(data)}`);
-        return this.xhrPost(data, url, headers).then((function(response) {
-            //  Parse JSON text returned by server
-            let data = JSON.parse(response);
+        return this.xhrPost(data, url, headers)
+            .then((function(response) {
+                //  Parse JSON text returned by server
+                let data;
+                try {
+                    data = this.parse(response);
+                }
+                catch(er) {
+                    return Promise.reject(new Error(`Error parsing server's reconcile response: ${response}`));
+                }
 
-            //  If server returned updated data instances, use them as the resolved value
-            //  Server will always return an object with the `hash` property
-            //  REFER TO THE `.then()` FUNCTION IMMEDIATELY AFTER `.sync()` IN `dataInit()`
-            if(Object.keys(data).length > 1) {
-                return Promise.reject(data);
+                //  If server returned updated data instances, use them as the resolved value
+                //  Server will always return an object with the `hash` property
+                let keys = Object.keys(data);
+                if(keys.length > 1) {
+                    //  New data was received from the server
+                    //    - If there are any data conflicts:
+                    //      - Resolve them with a GUI interface
+                    //      - For now just reject the promise
+                    //    - Otherwise:
+                    //      - Save this data locally
+                    //      - Compute new local hash and compare to result.reconcile.hash
+                    //      - If they don't match, reject the promise
+                    //      - If they do, define result.hash
+
+                    return Promise.resolve({resolve: data, remote: data.hash, local: localHash});
+                }
+
+                //  At this point, the automatic reconciliation algorithm has run and the server did not return any new data
+                //  If the hashes match now, fulfill the Promise for a successful sync
+                //  If they don't match, there are at least two possibilities:
+                //    - There may be a data discrepancy before `last-sync` that cannot be resolved automatically
+                //    - One of the data files may be corrupt/improperly formatted
+                if(localHash === data.hash)
+                    return Promise.resolve({hash: data.hash});
+                else
+                    return Promise.reject(new Error(`Unable to reconcile local and remote data files\nServer response JSON: ${data}`));
+            }).bind(this))
+            .catch(function(reason) {
+                return Promise.reject(new Error(`Error processing server's reconciliation response:\n${reason}`));
+            });
+    }
+    resolve(result) {
+        if(!result.resolve)
+            return Promise.resolve({'hash': result.hash});
+
+        console.info('Server reconcile result: %o', result);
+        // return Promise.reject(new Error('DataStorage.resolve() method not yet implemented to handle server\'s reconcile result'));
+
+        //  `result.resolve` contains an object with the structure {type->rank->id->instance} where:
+        //    - `type` is one of the data types defined in `types[]`
+        //    - `rank` is one of 'new', 'modified', 'deleted', or 'conflicts'
+        //    - `id` is the string encoding of the data instance's `_created` property
+        //    - `instance` is the raw data object
+        for(let type in result.resolve) {
+            if(type === 'deleted' || type === 'hash')
+                continue;
+
+            if(!result.resolve.hasOwnProperty(type))
+                continue;
+
+            let constructor;
+            switch(type) {
+                case 'ingredients':
+                    constructor = Ingredient;
+                    break;
+                case 'recipes':
+                    constructor = Recipe;
+                    break;
+                case 'meals':
+                    constructor = Meal;
+                    break;
+                case 'lists':
+                    // constructor = List;
+                    // break;
+                case 'receipts':
+                    // constructor = Receipt;
+                    // break;
+                    console.warn(`Resolution of ${type} is not yet implemented in DataStorage.resolve()`);
+                    continue;
+                default:
+                    return Promise.reject(new Error(`Unrecognized data type received from server reconciliation: ${type}`));
             }
 
-            //  Compare the new local and remote hashes
-            //  Assume both have changed
-            return this.hash() === data.hash;
-        }).bind(this));
+            if(result.resolve[type].new && Object.keys(result.resolve[type].new).length > 0) {
+                for(let id in result.resolve[type].new) {
+                    if(!result.resolve[type].new.hasOwnProperty(id))
+                        continue;
+
+                    let data = result.resolve[type].new[id];
+                    let inst = constructor.fromJSON(data);
+
+                    //  Add instance to the type's container array
+                    this.types[type].push(inst);
+
+                    //  Sort the container array using the standard sort algorithm
+                    this.types[type].sort((a, b) => a._created > b._created ? 1 : -1);
+                }
+            }
+            if(result.resolve[type].modified && Object.keys(result.resolve[type].modified).length > 0) {
+                for(let id in result.resolve[type].modified) {
+                    if(!result.resolve[type].modified.hasOwnProperty(id))
+                        continue;
+
+                    let data = result.resolve[type].modified[id];
+                    let inst = constructor.fromJSON(data);
+
+                    //  Replace the existing index in the container array with the new instance
+                    //  No need to resort if the sort algorithm is based on _created values
+                    let ind = this.types[type].findIndex(el => el.id === inst.id);
+                    if(ind < 0)
+                        return Promise.reject(new Error(`Unable to replace ${type.slice(0, -1)} ${inst.id} -- no existing ${type} with the same id were found in local storage`));
+                    this.types.splice(ind, 1, inst);
+                }
+            }
+            if(result.resolve.deleted && result.resolve.deleted[type] && result.resolve.deleted[type].length > 0) {
+                Promise.reject(new Error(`Processing of deleted instances from server reconciliation not yet implemented in DataStorage.resolve()`));
+            }
+            if(result.resolve[type].conflicts && Object.keys(result.resolve[type].conflicts).length > 0) {
+                Promise.reject(new Error(`Processing of conflicting instances from server reconciliation not yet implemented in DataStorage.resolve()`));
+            }
+        }
+
+        //  Compare the server hash to the new local hash and resolve/reject accordingly
+        //    - This will look very similar to `sync()` but must not invoke that method again to prevent recursion
+
+        //  If conflicts were resolved manually, POST them to the server's resolve() function
+        //  Otherwise use the server's hash given in `result.hash`
+        let remote = Promise.resolve(result.remote);
+
+        //  Write the new instance to local data cache
+        let local = this.write(`${this.key}-data`, this.dataString);
+
+        return Promise.all([remote, local])
+            .then(function([localHash, remoteHash]) {
+                //  If the two hash values match, then resolve with the value of the hash digest
+                //  If they don't match, reject with an unresolved error
+                if(local === remote)
+                    return Promise.resolve({hash: remote});
+                else
+                    return Promise.reject(new Error(`Unable to resolve reconciliation results\nResult from server: ${result.resolve}`));
+            })
     }
-
-
 
 
     /** For computing hash digest of string values
@@ -306,18 +596,18 @@ class DataStorage {
      */
     hash(str, alg = 'SHA-256') {
         if(!str)
-            str = this.read(`${DataStorage.key}-data`);
+            str = this.read(`${this.key}-data`);
 
         // console.debug(`Compute hash digest of ${typeof str === 'string' ? `string (length ${str.length})` : `${typeof str}`} using ${alg} algorithm\nvalue: ${str}`);
 
         //  SubtleCrypto.digest() returns a Promise, so this function needs only to return that promise
         let buf = new TextEncoder('utf-8').encode(str);
 
-        return crypto.subtle.digest(alg, buf).then((function(cipherBuf) {
-            return new Promise((function(resolve, reject) {
-                resolve(this.getString(cipherBuf));
-            }).bind(this));
-        }).bind(this));
+        return crypto.subtle.digest(alg, buf)
+            .then(res => Promise.resolve(this.getString(res)))
+            .catch(function(reason) {
+                return Promise.reject(new Error(`Error computing hash digest:\n${reason}`));
+            });
     }
 
 
@@ -335,7 +625,7 @@ class DataStorage {
             let request = new XMLHttpRequest();
 
             request.onerror = function(er) {
-                console.warn(`Data file GET request for ${filename} encountered an error: ${er}`);
+                console.warn(`Data file GET request for ${url} encountered an error: ${er}`);
             };
 
             //  Notice that the request is opened before the `load` event handler is defined
@@ -361,10 +651,13 @@ class DataStorage {
                     resolve(response);
                 }
                 else {
-                    reject(new Error(request.response));
+                    reject(new Error(`GET request encountered an error:\n${request.response}`));
                 }
             };
-        });
+        })
+        .catch(function(reason) {
+            return Promise.reject(new Error(`Error executing XHR GET:\n${reason}`));
+        });;
     }
 
     //  Issue a POST request with given data to a given URL with an optional header(s)
@@ -406,13 +699,16 @@ class DataStorage {
             //  e.g. poor network connection and no response received, a.k.a. 'request timed out'
             request.onerror = function(er) {
                 console.debug(`POST request encountered an error: ${er}`);
-                reject(new Error(`Network error: ${er}`));
+                reject(new Error(`POST request encountered an error: ${er}`));
             };
 
             // console.debug(`POST request body: ${body}`);
 
             // console.debug(`Sending POST request: ${request}`);
             request.send(body);
+        })
+        .catch(function(reason) {
+            return Promise.reject(new Error(`Error executing XHR POST:\n${reason}`));
         });
     }
 
@@ -423,10 +719,20 @@ class DataStorage {
      *
      */
     encrypt(data, password = 'password') {
-        return sjcl.encrypt(password, data);
+        try {
+            return sjcl.encrypt(password, data);
+        }
+        catch(er) {
+            throw new Error(`SJCL encrypt() error:\n${er}`);
+        }
     }
     decrypt(cipher, password = 'password') {
-        return sjcl.decrypt(password, cipher);
+        try {
+            return sjcl.decrypt(password, cipher);
+        }
+        catch(er) {
+            throw new Error(`SJCL encrypt() error:\n${er}`);
+        }
     }
 
     getString(buff) {
@@ -443,10 +749,20 @@ class DataStorage {
      *
      */
     parse(jstr, reviver) {
-        return JSON.parse(jstr, reviver);
+        try {
+            return JSON.parse(jstr, reviver);
+        }
+        catch(er) {
+            throw new Error(`JSON parse() error:\n${er}`);
+        }
     }
     serialize(val, replacer) {
-        return JSON.stringify(val, replacer);
+        try{
+            return JSON.stringify(val, replacer);
+        }
+        catch(er) {
+            throw new Error(`JSON stringify() error:\n${er}`);
+        }
     }
 
 
@@ -462,8 +778,7 @@ class DataStorage {
             localStorage.setItem(key, value);
         }
         catch(er) {
-            alert(`Error writing data to local storage: ${er}`);
-            console.error(`Error writing data to local storage:\n${er}`);
+            throw new Error(`Error writing data to local storage:\n${er}`);
         }
     }
     /** For local storage access
@@ -474,9 +789,7 @@ class DataStorage {
             localStorage.removeItem(key);
         }
         catch(er) {
-            alert(`Error deleting data from local storage: ${er}`);
-            console.error(`Error deleting data from local storage:\n${er}`);
+            throw new Error(`Error deleting data from local storage:\n${er}`);
         }
     }
 }
-DataStorage.key = 'mealplan';

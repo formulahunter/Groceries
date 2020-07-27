@@ -23,7 +23,7 @@ class Recipe {
             inst._modified = jobj._modified;
 
         for(let ingd of jobj.ingredients) {
-            inst.ingredients.push(Ingredient.fromJSON(ingd));
+            inst.ingredients.push(plan.pantry.getIngredient(ingd._name));
         }
         inst.ingredients.sort((a,b) => a.title > b.title ? 1 : -1);
 
@@ -75,12 +75,8 @@ class Recipe {
             return value;
         };
 
-        let ingredients = [];
-        this.ingredients.forEach(val => ingredients.push(val.name));
-
-        let instructions = [];
-        this.instructions.forEach(val => instructions.push(val.toJSON()));
-
+        let ingredients = this.ingredients.map(val => val.name);
+        let instructions = this.instructions.map(val => val.toJSON());
         let jobj = {
             _created: this._created,
             title: replacer(this.title),
