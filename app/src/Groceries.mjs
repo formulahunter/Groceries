@@ -2,6 +2,8 @@
  * Created by Hunter on 8/11/2018.
  */
 
+import DataStorage from '../../node_modules/@formulahunter/datastorage/src/index.mjs';
+console.log(DataStorage);
 
 //  SKU's are parsed into an index by using their string representation as an index
 //  When matching input, this index will have to be looped and all possible matches pushed too an array
@@ -536,3 +538,6 @@ function clearInput() {
 
     inputTable.tFoot.dispatchEvent(new Event("click"));
 }
+
+
+main();
