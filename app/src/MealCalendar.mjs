@@ -2,7 +2,7 @@
  * Created by Hunter on 11/18/2018.
  */
 
-class MealCalendar {
+export default class MealCalendar {
     constructor() {
         this.container = document.createElement('div');
         this.container.className = 'meal-plan';

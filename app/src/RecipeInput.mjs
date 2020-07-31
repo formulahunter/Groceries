@@ -2,7 +2,7 @@
  * Created by Hunter on 11/18/2018.
  */
 
-class RecipeInput {
+export default class RecipeInput {
     constructor() {
         this.container = document.createElement('div');
         this.container.className = 'meal-input';

@@ -2,7 +2,7 @@
  * Created by Hunter on 11/18/2018.
  */
 
-class Ingredient {
+export default class Ingredient {
     constructor(name, unit, qty) {
         if(!name || name === '')
             console.log(`No name provided for new Ingredient instance`);

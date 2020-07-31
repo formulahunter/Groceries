@@ -3,6 +3,7 @@
  */
 
 import DataStorage from '../../node_modules/@formulahunter/datastorage/src/index.mjs';
+const data = new DataStorage('groceries');
 
 //  SKU's are parsed into an index by using their string representation as an index
 //  When matching input, this index will have to be looped and all possible matches pushed too an array

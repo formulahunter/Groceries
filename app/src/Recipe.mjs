@@ -2,7 +2,7 @@
  * Created by Hunter on 11/18/2018.
  */
 
-class Recipe {
+export default class Recipe {
     constructor(title) {
         if(!title || title === '')
             throw new TypeError('Argument to `Recipe` constructor must be a non-empty string');

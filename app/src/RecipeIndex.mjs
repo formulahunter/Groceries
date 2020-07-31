@@ -2,7 +2,7 @@
  * Created by Hunter on 11/18/2018.
  */
 
-class RecipeIndex {
+export default class RecipeIndex {
     constructor() {
         this.container = document.createElement('div');
         this.container.className = 'index';

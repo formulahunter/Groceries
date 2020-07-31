@@ -2,7 +2,7 @@
  * Created by Hunter on 5/26/2018.
  */
 
-class USDollar extends Number {
+export default class USDollar extends Number {
     constructor(...args) {
         super(...args);
     }
