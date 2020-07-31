@@ -3,14 +3,16 @@
  */
 
 import DataStorage from '../../node_modules/@formulahunter/datastorage/src/index.mjs';
-console.log(DataStorage);
 
 //  SKU's are parsed into an index by using their string representation as an index
 //  When matching input, this index will have to be looped and all possible matches pushed too an array
 //  This array should then be sorted by frequency, and the SKU with the most occurrences should be suggested first
 //  If multiple SKUs match the pattern and have equal number of occurrences, there should be no preference for one or the other
-window.skuIndex = {};
-window.skuList = [];
+const skuIndex = {};
+const skuList = [];
+let purchases = [];
+let inputTable = null;
+let historyTable = null;
 function main() {
     configureInputTable();
     inputTable.tFoot.dispatchEvent(new Event("click"));
@@ -19,8 +21,8 @@ function main() {
     fetchData();
 }
 function configureInputTable() {
-    window.inputTable = document.getElementById("input");
-    window.historyTable = document.getElementById("history");
+    inputTable = document.getElementById("input");
+    historyTable = document.getElementById("history");
 
     //     <tfoot>
     //         <tr class="add">
@@ -319,8 +321,8 @@ function fetchData() {
     let request = new XMLHttpRequest();
     request.onreadystatechange = function() {
         if(this.readyState === 4 && this.statusText === "OK") {
-            window.purchases = parseXML(this.responseXML);
-            populateHistory(window.purchases);
+            purchases = parseXML(this.responseXML);
+            populateHistory(purchases);
         }
     };
 
@@ -332,7 +334,7 @@ function fetchData() {
 function parseXML(doc) {
     //  Create index of SKU's to be used for auto-fill
     //  Create a chronological index of purchases to populate history table
-    let purchases = [];
+    let prch = [];
 
     let lists = doc.getElementsByTagName("purchase");
     for (let purcEl of lists) {
@@ -347,7 +349,7 @@ function parseXML(doc) {
             departments: []
         };
         purc.date.setHours(purc.date.getHours()+purc.date.getTimezoneOffset()/60)
-        purchases.push(purc);
+        prch.push(purc);
 
         let departments = purcEl.getElementsByTagName("department");
         for(let deptEl of departments) {
@@ -404,8 +406,8 @@ function parseXML(doc) {
     skuList.sort((a,b)=>b.count-a.count);
 
     //  Return a data structure to populate history table
-    purchases.sort((a, b)=>{if(b.date===a.date){return b.time-a.time}else{return b.date-a.date}});
-    return purchases;
+    prch.sort((a, b)=>{if(b.date===a.date){return b.time-a.time}else{return b.date-a.date}});
+    return prch;
 }
 function populateHistory(data) {
     //  Show a table with summary data for each purchase, with ability to expand each one to show all details
