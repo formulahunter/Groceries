@@ -7,7 +7,7 @@ const port = 8055;
 const server = express();
 
 //  designated landing pages
-const pages = /\/?(Groceries|Meals|Recipes)/i;
+const pages = /\/?(Groceries|Meals|Recipes)$/i;
 
 //  check request for designated landing page
 server.use((req, res, next) => {
