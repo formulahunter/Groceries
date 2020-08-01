@@ -2,6 +2,7 @@
  * Created by Hunter on 8/11/2018.
  */
 
+import USDollar from "./USDollar";
 import DataStorage from '../../node_modules/@formulahunter/datastorage/src/index.mjs';
 const data = new DataStorage('groceries');
 
