@@ -2,9 +2,9 @@
  * Created by Hunter on 8/11/2018.
  */
 
-import USDollar from "./USDollar";
-import DataStorage from '../../node_modules/@formulahunter/datastorage/src/index.mjs';
-const data = new DataStorage('groceries');
+import USDollar from './USDollar.mjs';
+// import DataStorage from '../../node_modules/@formulahunter/datastorage/src/index.mjs';
+// const data = new DataStorage('groceries');
 
 //  SKU's are parsed into an index by using their string representation as an index
 //  When matching input, this index will have to be looped and all possible matches pushed too an array
@@ -17,8 +17,10 @@ let inputTable = null;
 let historyTable = null;
 function main() {
     configureInputTable();
-    inputTable.tFoot.dispatchEvent(new Event("click"));
-    document.getElementById("date").focus();
+    inputTable.tFoot.dispatchEvent(new Event('click'));
+    document.getElementById('date').focus();
+    document.querySelectorAll('input[type="button"]')
+            .forEach(el => el.addEventListener('click', saveList));
 
     fetchData();
 }
@@ -443,37 +445,21 @@ function populateHistory(data) {
     }
 }
 
-function saveList() {
-    let str = getXMLString().replace(/&/g, "#amp#").replace("$", "&dollar;");
+async function saveList() {
+    // console.log('saving receipt');
+    let receipt = parseInput();
+    // console.log('saving receipt: %o', receipt);
 
-    let httpRequest = new XMLHttpRequest();
-    httpRequest.onreadystatechange = function() {
-        if(httpRequest.readyState === XMLHttpRequest.DONE) {
-            if(httpRequest.statusText === "OK") {
-                let text = httpRequest.responseText;
-                let bytes = Number(text);
-                if(!Number.isNaN(bytes)) {
-                    console.log(`${str.length} string characters -> ${bytes} bytes`);
-                    alert(`List recorded successfully`);
-                    clearInput();
-
-                    // finance.display.log.addTransaction(txn);
-                }
-                else if(text === "false") {
-                    alert(`Error recording the list: 'fail' response received from server`);
-                }
-                else {
-                    alert(`Error recording the list: unrecognized response received from server:\n${text}`);
-                }
-            }
-            else {
-                alert(`Error recording the list: XMLHttpRequest status code: ${httpRequest.status}`);
-            }
-        }
-    };
-    httpRequest.open("POST", "saveList.php");
-    httpRequest.setRequestHeader("content-type", "application/x-www-form-urlencoded");
-    httpRequest.send(`xmlStr=${str}`);
+    let res = await fetch('saveReceipt', {
+        port: 8055,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(receipt)
+    });
+    console.log(await res.json());
 }
 function getXMLString() {
     let xmlString = `<purchase>\n`;
@@ -533,6 +519,46 @@ function getXMLString() {
     xmlString += `</purchase>\n`;
 
     return xmlString;
+}
+function parseInput() {
+
+    let receipt = {
+        date: document.getElementById("date").value,
+        time: document.getElementById("time").value,
+        location: document.getElementById("location").value,
+        account: document.getElementById("account").value,
+        departments: []
+    };
+
+    for(let deptRow of inputTable.tBodies) {
+
+        let department = {
+            name: deptRow.rows[0].cells[1].children[0].textContent,
+            products: []
+        };
+
+        for(let prodRow of deptRow.rows) {
+            //  skip department and "add" rows
+            if(prodRow.className === "department" || prodRow.className === "add") {
+                continue;
+            }
+
+            department.products.push({
+                sku: prodRow.cells[1].children[0].textContent,
+                desc: prodRow.cells[2].children[0].textContent,
+                qty: prodRow.cells[3].children[0].textContent,
+                unit: prodRow.cells[4].children[0].textContent,
+                price: prodRow.cells[5].children[0].textContent,
+                code: prodRow.cells[6].children[0].textContent,
+                tax: prodRow.cells[7].children[0].textContent,
+                disc: prodRow.cells[8].children[0].textContent
+            });
+        }
+
+        receipt.departments.push(department);
+    }
+
+    return receipt;
 }
 
 function clearInput() {
