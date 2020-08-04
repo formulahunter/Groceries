@@ -394,13 +394,12 @@ async function saveList(receipt) {
 }
 function parseInput() {
 
-    let receipt = {
-        date: document.getElementById("date").value,
-        time: document.getElementById("time").value,
-        location: document.getElementById("location").value,
-        account: document.getElementById("account").value,
-        departments: []
-    };
+    let receipt = new GroceryReceipt();
+    receipt.date = document.getElementById("date").value;
+    receipt.time = document.getElementById("time").value;
+    receipt.location = document.getElementById("location").value;
+    receipt.account = document.getElementById("account").value;
+    receipt.departments = [];
 
     for(let deptRow of inputTable.tBodies) {
 
