@@ -322,96 +322,25 @@ function deleteProduct(ev) {
     }
 }
 
-function fetchData() {
-    let request = new XMLHttpRequest();
-    request.onreadystatechange = function() {
-        if(this.readyState === 4 && this.statusText === "OK") {
-            purchases = parseXML(this.responseXML);
-            populateHistory(purchases);
-            convertToJSON(purchases);
+async function fetchData() {
+
+    let res = await fetch('data/receipts.json', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json'
         }
-    };
-
-    let now = new Date(0);
-    request.open("GET", "data.xml");
-    request.setRequestHeader("If-Modified-Since", now.toUTCString());
-    request.send();
-}
-function parseXML(doc) {
-    //  Create index of SKU's to be used for auto-fill
-    //  Create a chronological index of purchases to populate history table
-    let prch = [];
-
-    let lists = doc.getElementsByTagName("purchase");
-    for (let purcEl of lists) {
-        let dateTxt = purcEl.getElementsByTagName("date")[0].textContent;
-        let timeTxt = purcEl.getElementsByTagName("time")[0].textContent;
-        let purc = {
-            date: new Date(dateTxt),
-            time: new Date(`1970-01-01 ${timeTxt}`),
-            location: purcEl.getElementsByTagName("location")[0].textContent,
-            account: purcEl.getElementsByTagName("account")[0].textContent,
-            total: 0,
-            departments: []
-        };
-        purc.date.setHours(purc.date.getHours()+purc.date.getTimezoneOffset()/60)
-        prch.push(purc);
-
-        let departments = purcEl.getElementsByTagName("department");
-        for(let deptEl of departments) {
-            let dept = {
-                name: deptEl.getAttribute("name"),
-                products: []
-            };
-            purc.departments.push(dept);
-
-            let products = deptEl.getElementsByTagName("product");
-            for(let prodEl of products) {
-                let prod = {
-                    sku: String(prodEl.getElementsByTagName("sku")[0].textContent),
-                    desc: prodEl.getElementsByTagName("description")[0].textContent,
-                    qty: prodEl.getElementsByTagName("quantity")[0].textContent,
-                    unit: prodEl.getElementsByTagName("unit")[0].textContent,
-                    price: prodEl.getElementsByTagName("price")[0].textContent,
-                    code: prodEl.getElementsByTagName("code")[0].textContent,
-                    tax: prodEl.getElementsByTagName("taxed")[0].textContent,
-                    disc: prodEl.getElementsByTagName("discount")[0].textContent,
-                };
-                dept.products.push(prod);
-                //  There could potentially be some optimization for memory done here to avoid creating redundant objects for a single SKU, but it may well be worth waiting to see if a single SKU's product description price, etc. remain constant in the long term. Even if a product's price changes over time, a different approach would be necessary for this optimization.
-
-                //  Sum purchase price
-                //  Check accuracy of this calculation
-                if(prod.tax === "Y") {
-                    let tax = 1.08;
-                    purc.total += Math.round(Number(prod.price)*Number(prod.qty)*100*tax)/100;
-                }
-                else {
-                    purc.total += Math.round(Number(prod.price)*Number(prod.qty)*100)/100;
-                }
-
-                if(!skuIndex[prod.sku]) {
-                    skuIndex[prod.sku] = prod;
-                    skuList.push(prod);
-                    prod.count = 1;
-                }
-                else {
-                    skuIndex[prod.sku].count++;
-                }
-                //  Notice that the skuIndex only keeps track of the first object defined for a given SKU. If the same SKU appears again in a subsequent purchase, the purchases entry will refer to a new object instantiated for the second appearance though the skuIndex will maintain reference only to the first index, and its count will be incremented. The counts are in fact the reason for this apparent inconsistency -- defining the count on each instance would be self-defeating as each instance would have count of 1. As noted above, there is likely some optimization to be realized here, but that is left for a later date.
-            }
-        }
-
-        //  Convert purchase total to USDollar instance for display
-        purc.total = new USDollar(purc.total);
-    }
-
-    //  Sort the skuList by frequency
-    skuList.sort((a,b)=>b.count-a.count);
-
-    //  Return a data structure to populate history table
-    prch.sort((a, b)=>{if(b.date===a.date){return b.time-a.time}else{return b.date-a.date}});
-    return prch;
+    });
+    let json = await res.json();
+    purchases = json.receipts.map(dat => {
+        let receipt = new GroceryReceipt();
+        receipt.date = new Date(dat.date);
+        receipt.location = dat.location;
+        receipt.account = dat.account;
+        receipt.total = new USDollar(dat.total);
+        receipt.departments = dat.departments;
+        return receipt;
+    });
+    populateHistory(purchases);
 }
 function populateHistory(data) {
     //  Show a table with summary data for each purchase, with ability to expand each one to show all details
@@ -427,7 +356,7 @@ function populateHistory(data) {
 
         let timeCell = row.insertCell(-1);
         let timeLabel = timeCell.appendChild(document.createElement("span"));
-        timeLabel.textContent = purc.time.toLocaleTimeString();
+        timeLabel.textContent = purc.date.toLocaleTimeString();
 
         let locationCell = row.insertCell(-1);
         let locationLabel = locationCell.appendChild(document.createElement("span"));
@@ -462,65 +391,6 @@ async function saveList(receipt) {
         body: JSON.stringify(receipt)
     });
     return res.json();
-}
-function getXMLString() {
-    let xmlString = `<purchase>\n`;
-
-    let date = document.getElementById("date").value;
-    xmlString += `<date>${date}</date>\n`;
-
-    let time = document.getElementById("time").value;
-    xmlString += `<time>${time}</time>\n`;
-
-    let location = document.getElementById("location").value;
-    xmlString += `<location>${location}</location>\n`;
-
-    let account = document.getElementById("account").value;
-    xmlString += `<account>${account}</account>\n`;
-
-    for(let dept of inputTable.tBodies) {
-        let name = dept.rows[0].cells[1].children[0].textContent;
-        xmlString += `<department name="${name}">\n`;
-
-        for(let prod of dept.rows) {
-            if(prod.className === "department" || prod.className === "add") {
-                continue;
-            }
-            xmlString += `<product>\n`;
-
-            let sku = prod.cells[1].children[0].textContent;
-            xmlString += `<sku>${sku}</sku>\n`;
-
-            let desc = prod.cells[2].children[0].textContent;
-            xmlString += `<description>${desc}</description>\n`;
-
-            let qty = prod.cells[3].children[0].textContent;
-            xmlString += `<quantity>${qty}</quantity>\n`;
-
-            let unit = prod.cells[4].children[0].textContent;
-            xmlString += `<unit>${unit}</unit>\n`;
-
-            let price = prod.cells[5].children[0].textContent;
-            xmlString += `<price>${price}</price>\n`;
-
-            let code = prod.cells[6].children[0].textContent;
-            xmlString += `<code>${code}</code>\n`;
-
-            let tax = prod.cells[7].children[0].textContent;
-            xmlString += `<taxed>${tax}</taxed>\n`;
-
-            let disc = prod.cells[8].children[0].textContent;
-            xmlString += `<discount>${disc}</discount>\n`;
-
-            xmlString += `</product>\n`;
-        }
-
-        xmlString += `</department>\n`;
-    }
-
-    xmlString += `</purchase>\n`;
-
-    return xmlString;
 }
 function parseInput() {
 
@@ -561,25 +431,6 @@ function parseInput() {
     }
 
     return receipt;
-}
-async function convertToJSON(xmlData) {
-
-    for(let purchase of xmlData) {
-
-        let receipt = new GroceryReceipt();
-        receipt.date = purchase.date;
-        receipt.date.setHours(purchase.time.getHours());
-        receipt.date.setMinutes(purchase.time.getMinutes());
-        receipt.location = purchase.location;
-        receipt.account = purchase.account;
-        receipt.total = purchase.total;
-        receipt.departments = purchase.departments;
-
-        let res = await saveList(receipt);
-        if(!res.bytesWritten) {
-            console.error(`error saving receipt - server response: %o`, res);
-        }
-    }
 }
 
 function clearInput() {
