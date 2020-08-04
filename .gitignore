@@ -6,6 +6,7 @@ node_modules
 
 #   Ignore user data files
 data/*
+app/data
 
 #   Ignore Git message files
 message*.*

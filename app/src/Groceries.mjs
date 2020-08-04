@@ -3,6 +3,7 @@
  */
 
 import USDollar from './USDollar.mjs';
+import GroceryReceipt from './GroceryReceipt.mjs';
 // import DataStorage from '../../node_modules/@formulahunter/datastorage/src/index.mjs';
 // const data = new DataStorage('groceries');
 
@@ -327,6 +328,7 @@ function fetchData() {
         if(this.readyState === 4 && this.statusText === "OK") {
             purchases = parseXML(this.responseXML);
             populateHistory(purchases);
+            convertToJSON(purchases);
         }
     };
 
@@ -387,8 +389,6 @@ function parseXML(doc) {
                 else {
                     purc.total += Math.round(Number(prod.price)*Number(prod.qty)*100)/100;
                 }
-                if(dateTxt === '2018-04-04')
-                    console.log(`${prod.desc}\n${prod.qty} @ ${prod.price} = ${prod.price*prod.qty}\n${purc.total}`);
 
                 if(!skuIndex[prod.sku]) {
                     skuIndex[prod.sku] = prod;
@@ -445,9 +445,11 @@ function populateHistory(data) {
     }
 }
 
-async function saveList() {
+async function saveList(receipt) {
     // console.log('saving receipt');
-    let receipt = parseInput();
+    if(receipt === undefined) {
+        receipt = parseInput();
+    }
     // console.log('saving receipt: %o', receipt);
 
     let res = await fetch('saveReceipt', {
@@ -459,7 +461,7 @@ async function saveList() {
         },
         body: JSON.stringify(receipt)
     });
-    console.log(await res.json());
+    return res.json();
 }
 function getXMLString() {
     let xmlString = `<purchase>\n`;
@@ -559,6 +561,25 @@ function parseInput() {
     }
 
     return receipt;
+}
+async function convertToJSON(xmlData) {
+
+    for(let purchase of xmlData) {
+
+        let receipt = new GroceryReceipt();
+        receipt.date = purchase.date;
+        receipt.date.setHours(purchase.time.getHours());
+        receipt.date.setMinutes(purchase.time.getMinutes());
+        receipt.location = purchase.location;
+        receipt.account = purchase.account;
+        receipt.total = purchase.total;
+        receipt.departments = purchase.departments;
+
+        let res = await saveList(receipt);
+        if(!res.bytesWritten) {
+            console.error(`error saving receipt - server response: %o`, res);
+        }
+    }
 }
 
 function clearInput() {

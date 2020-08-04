@@ -4,7 +4,7 @@ async function saveNewReceipt(req, res, next) {
     let dataFile = null;
     let data = null;
     try {
-        dataFile = await fs.open('../data/receipts.json', 'r+');
+        dataFile = await fs.open('data/receipts.json', 'r+');
         data = await dataFile.readFile('utf-8');
         data.receipts.push(req.body);
     }
