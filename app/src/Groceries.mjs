@@ -416,8 +416,11 @@ async function saveList(receipt) {
 function parseInput() {
 
     let receipt = new GroceryReceipt();
-    receipt.date = document.getElementById("date").value;
-    receipt.time = document.getElementById("time").value;
+
+    let dateText = document.getElementById("date").value
+    let timeText = document.getElementById("time").value;
+    receipt.date = new Date(`${dateText} ${timeText}`);
+
     receipt.location = document.getElementById("location").value;
     receipt.account = document.getElementById("account").value;
     receipt.departments = [];
@@ -438,9 +441,9 @@ function parseInput() {
             department.products.push({
                 sku: prodRow.cells[1].children[0].textContent,
                 desc: prodRow.cells[2].children[0].textContent,
-                qty: prodRow.cells[3].children[0].textContent,
+                qty: Number(prodRow.cells[3].children[0].textContent),
                 unit: prodRow.cells[4].children[0].textContent,
-                price: prodRow.cells[5].children[0].textContent,
+                price: Number(prodRow.cells[5].children[0].textContent),
                 code: prodRow.cells[6].children[0].textContent,
                 tax: prodRow.cells[7].children[0].textContent,
                 disc: prodRow.cells[8].children[0].textContent
