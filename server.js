@@ -56,6 +56,9 @@ async function saveNewReceipt(req, res, next) {
         dataFile = await fs.open('./app/data/receipts.json', 'r+');
         data = JSON.parse(await dataFile.readFile('utf-8'));
         data.receipts.push(req.body);
+        data.receipts.sort((a, b) => {
+            return new Date(b.date) - new Date(a.date)
+        });
     }
     catch(er) {
         console.error(`error reading data file: ${er.toString()}`);
@@ -72,7 +75,7 @@ async function saveNewReceipt(req, res, next) {
     }
     catch(er) {
         console.error(`error writing data file: ${er.toString()}`);
-        return 'internal_error'
+        return 'internal_error';
     }
     finally {
         dataFile.close();
