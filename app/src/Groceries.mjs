@@ -17,8 +17,11 @@ let purchases = [];
 let inputTable = null;
 let historyTable = null;
 function main() {
+    inputTable = document.getElementById("input");
+    historyTable = document.getElementById("history");
+
     configureInputTable();
-    inputTable.tFoot.dispatchEvent(new Event('click'));
+
     document.getElementById('date').focus();
     document.querySelectorAll('input[type="button"]')
             .forEach(el => el.addEventListener('click', saveList.bind(null, undefined)));
@@ -26,8 +29,6 @@ function main() {
     fetchData();
 }
 function configureInputTable() {
-    inputTable = document.getElementById("input");
-    historyTable = document.getElementById("history");
 
     //     <tfoot>
     //         <tr class="add">
@@ -81,6 +82,7 @@ function configureInputTable() {
     addLabel.textContent = "ADD DEPARTMENT";
 
     inputTable.tFoot.addEventListener("click", addDepartment, false);
+    inputTable.tFoot.dispatchEvent(new Event('click'));
 }
 
 function addDepartment(ev) {
