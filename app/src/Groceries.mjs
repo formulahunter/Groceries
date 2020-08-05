@@ -21,7 +21,7 @@ function main() {
     inputTable.tFoot.dispatchEvent(new Event('click'));
     document.getElementById('date').focus();
     document.querySelectorAll('input[type="button"]')
-            .forEach(el => el.addEventListener('click', saveList));
+            .forEach(el => el.addEventListener('click', saveList.bind(null, undefined)));
 
     fetchData();
 }
@@ -374,6 +374,20 @@ function populateHistory(data) {
     }
 }
 
+/** `POST` a `GroceryReceipt` object to be saved on the server
+ *
+ * **Note**: the `receipt` argument is included so that this function may be
+ * called as a utility in addition to being used as the 'Save' button event
+ * handler. In the latter case, the event listener must be added by passing this
+ * function using bind(null, undefined); the second argument displaces the event
+ * argument passed to handlers by default, ensuring that the event itself is not
+ * erroneously `POST`ed to the server as the receipt
+ *
+ * @param {GroceryReceipt?} receipt - (optional) receipt to be saved. if not
+ *                          provided, one will be constructed by parsing the
+ *                          input table
+ * @returns {Promise<{bytesWritten: Number}>}
+ */
 async function saveList(receipt) {
     // console.log('saving receipt');
     if(receipt === undefined) {
@@ -381,7 +395,7 @@ async function saveList(receipt) {
     }
     // console.log('saving receipt: %o', receipt);
 
-    let res = await fetch('saveReceipt', {
+    let response = await fetch('saveReceipt', {
         port: 8055,
         method: 'POST',
         headers: {
@@ -390,7 +404,14 @@ async function saveList(receipt) {
         },
         body: JSON.stringify(receipt)
     });
-    return res.json();
+    let result = await response.json();
+    if(!result.bytesWritten) {
+        console.debug('server response: %o', response);
+        console.debug('json result: %o', result);
+        throw new Error('error saving receipt: invalid response received from server');
+    }
+
+    return result;
 }
 function parseInput() {
 
