@@ -336,8 +336,22 @@ async function fetchData() {
         receipt.date = new Date(dat.date);
         receipt.location = dat.location;
         receipt.account = dat.account;
-        receipt.total = new USDollar(dat.total);
         receipt.departments = dat.departments;
+
+        //  calculate the total cost of the purchase
+        let total = 0;
+        for(let dept of receipt.departments) {
+            for(let prod of dept.products) {
+                let inc = prod.qty * prod.price;
+                if(prod.tax === 'Y') {
+                    inc *= 1.08;
+                }
+                inc = Math.round(inc * 100) / 100;
+                total += inc;
+            }
+        }
+        receipt.total = new USDollar(total);
+
         return receipt;
     });
     populateHistory(purchases);
