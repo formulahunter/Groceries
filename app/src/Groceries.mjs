@@ -143,7 +143,7 @@ function addProduct(ev) {
     skuLabel.textContent = "SKU";
     skuLabel.contentEditable = true;
     skuLabel.addEventListener("focus", selectInput, false);
-    skuLabel.addEventListener("blur", populate.bind(skuLabel, "SKU"), false);
+    // skuLabel.addEventListener("blur", populate.bind(skuLabel, "SKU"), false);
     skuLabel.addEventListener("keydown", checkSKUIndex.bind(skuLabel), false);
 
     let descCell = newProd.insertCell(-1);
