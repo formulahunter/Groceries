@@ -195,7 +195,26 @@ function addProduct(ev) {
     discLabel.addEventListener("focus", selectInput, false);
     discLabel.addEventListener("blur", populate.bind(discLabel, "DISCOUNT"), false);
 
+    newProd.addEventListener('keypress', addRowsOnEnter);
+
     skuLabel.focus();
+}
+
+function addRowsOnEnter(ev) {
+    if(ev.key.toUpperCase() === 'ENTER') {
+        ev.stopPropagation();
+        ev.preventDefault();
+
+        if(ev.shiftKey) {
+            //  emulate a click on the 'ADD DEPARTMENT' row
+            inputTable.tFoot.dispatchEvent(new Event('click'));
+        }
+        else {
+            //  emulate a click on the 'ADD PRODUCT' row in the current <tbody>
+            let tbody = ev.currentTarget.parentElement;
+            tbody.rows[tbody.rows.length - 1].dispatchEvent(new Event('click'));
+        }
+    }
 }
 
 function selectInput(ev) {
