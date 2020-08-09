@@ -74,15 +74,16 @@ function configureInputTable() {
     accountInput.value = 'Checking';
     accountInput.addEventListener("focus", deselectAll, false);
 
-    let inputFooter = inputTable.createTFoot().insertRow(-1);
-    let addCell = inputFooter.insertCell(-1);
+    let inputFooter = inputTable.createTFoot();
+    let addRow = inputFooter.insertRow(-1);
+    let addCell = addRow.insertCell(-1);
     addCell.colSpan = 9;
 
     let addLabel = addCell.appendChild(document.createElement("span"));
     addLabel.textContent = "ADD DEPARTMENT";
 
-    inputTable.tFoot.addEventListener("click", addDepartment, false);
-    inputTable.tFoot.dispatchEvent(new Event('click'));
+    addRow.addEventListener("click", addDepartment, false);
+    addRow.dispatchEvent(new Event('click'));
 }
 
 function addDepartment(ev) {
@@ -90,7 +91,7 @@ function addDepartment(ev) {
     ev.preventDefault();
 
     let newDept = document.createElement("tbody");
-    inputTable.insertBefore(newDept, ev.currentTarget);
+    inputTable.insertBefore(newDept, inputTable.tFoot);
 
     //  DEPARTMENT ROW
     let deptRow = newDept.insertRow(-1);
@@ -207,7 +208,7 @@ function addRowsOnEnter(ev) {
 
         if(ev.shiftKey) {
             //  emulate a click on the 'ADD DEPARTMENT' row
-            inputTable.tFoot.dispatchEvent(new Event('click'));
+            inputTable.tFoot.rows[0].dispatchEvent(new Event('click'));
         }
         else {
             //  emulate a click on the 'ADD PRODUCT' row in the current <tbody>
