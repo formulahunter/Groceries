@@ -219,10 +219,12 @@ function addProduct(ev) {
 
     let qtyCell = newProd.insertCell(-1);
     let qtyLabel = qtyCell.appendChild(document.createElement("span"));
+    qtyLabel.className = 'qty';
     qtyLabel.textContent = "QTY";
     qtyLabel.contentEditable = true;
     qtyLabel.addEventListener("focus", selectInput, false);
     qtyLabel.addEventListener("blur", populate.bind(qtyLabel, "QTY"), false);
+    qtyLabel.addEventListener('input', updateExtProductCost);
 
     let unitCell = newProd.insertCell(-1);
     let unitLabel = unitCell.appendChild(document.createElement("span"));
@@ -233,10 +235,12 @@ function addProduct(ev) {
 
     let priceCell = newProd.insertCell(-1);
     let priceLabel = priceCell.appendChild(document.createElement("span"));
+    priceLabel.className = 'price';
     priceLabel.textContent = "PRICE";
     priceLabel.contentEditable = true;
     priceLabel.addEventListener("focus", selectInput, false);
     priceLabel.addEventListener("blur", populate.bind(priceLabel, "PRICE"), false);
+    priceLabel.addEventListener('input', updateExtProductCost);
 
     let codeCell = newProd.insertCell(-1);
     let codeLabel = codeCell.appendChild(document.createElement("span"));
@@ -247,10 +251,12 @@ function addProduct(ev) {
 
     let taxCell = newProd.insertCell(-1);
     let taxLabel = taxCell.appendChild(document.createElement("span"));
+    taxLabel.className = 'taxed';
     taxLabel.textContent = "TAXED";
     taxLabel.contentEditable = true;
     taxLabel.addEventListener("focus", selectInput, false);
     taxLabel.addEventListener("blur", populate.bind(taxLabel, "TAXED"), false);
+    taxLabel.addEventListener('input', updateExtProductCost);
 
     let discCell = newProd.insertCell(-1);
     let discLabel = discCell.appendChild(document.createElement("span"));
@@ -261,7 +267,7 @@ function addProduct(ev) {
 
     let extCell = newProd.insertCell(-1);
     let extLabel = extCell.appendChild(document.createElement("span"));
-    extLabel.name = 'EXT';
+    extLabel.className = 'ext';
     extLabel.textContent = "EXT";
 
     newProd.addEventListener('keypress', addRowsOnEnter);
@@ -284,6 +290,25 @@ function addRowsOnEnter(ev) {
             tbody.rows[tbody.rows.length - 1].dispatchEvent(new Event('click'));
         }
     }
+}
+
+function updateExtProductCost(ev) {
+    let prodRow = ev.target.closest('tr');
+    let qty = Number(prodRow.querySelector('span.qty').textContent);
+    let price = Number(prodRow.querySelector('span.price').textContent);
+    let taxed = prodRow.querySelector('span.taxed').textContent === 'Y';
+
+    if(isNaN(qty) || isNaN(price)) {
+        prodRow.querySelector('span.ext').textContent = '$-.--';
+        return;
+    }
+
+    let ext = qty * price;
+    if(taxed) {
+        ext *= 1.08;
+    }
+    ext = Math.round(ext * 100).toFixed(0);
+    prodRow.querySelector('span.ext').textContent = `$${ext.substring(0, ext.length - 2)}.${ext.substring(ext.length - 2)}`;
 }
 
 function selectInput(ev) {
