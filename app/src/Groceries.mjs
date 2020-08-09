@@ -266,9 +266,13 @@ function addProduct(ev) {
     discLabel.addEventListener("blur", populate.bind(discLabel, "DISCOUNT"), false);
 
     let extCell = newProd.insertCell(-1);
+    let extCurrencyLabel = extCell.appendChild(document.createElement('span'));
+    extCurrencyLabel.textContent = '$';
+
     let extLabel = extCell.appendChild(document.createElement("span"));
     extLabel.className = 'ext';
-    extLabel.textContent = "EXT";
+    extLabel.textContent = '-.--';
+    extLabel.addEventListener('input', updateTotalCost);
 
     newProd.addEventListener('keypress', addRowsOnEnter);
 
@@ -299,7 +303,7 @@ function updateExtProductCost(ev) {
     let taxed = prodRow.querySelector('span.taxed').textContent === 'Y';
 
     if(isNaN(qty) || isNaN(price)) {
-        prodRow.querySelector('span.ext').textContent = '$-.--';
+        prodRow.querySelector('span.ext').textContent = '-.--';
         return;
     }
 
@@ -308,7 +312,28 @@ function updateExtProductCost(ev) {
         ext *= 1.08;
     }
     ext = Math.round(ext * 100).toFixed(0);
-    prodRow.querySelector('span.ext').textContent = `$${ext.substring(0, ext.length - 2)}.${ext.substring(ext.length - 2)}`;
+    prodRow.querySelector('span.ext').textContent = `${ext.substring(0, ext.length - 2)}.${ext.substring(ext.length - 2)}`;
+
+    updateTotalCost();
+}
+function updateTotalCost(ev) {
+
+    let total = 0;
+    for(let tbody of inputTable.querySelectorAll('tbody')) {
+        for(let row of tbody.rows) {
+            let extLabel = row.querySelector('span.ext');
+            if(extLabel === null) {
+                continue;
+            }
+            let ext = Number(extLabel.textContent.replace('$', ''));
+            if(!isNaN(ext)) {
+                total += ext;
+            }
+        }
+    }
+
+    total = Math.round(total * 100).toFixed(0);
+    inputTable.querySelector('#form-total').textContent = `${total.substring(0, total.length - 2)}.${total.substring(total.length - 2)}`;
 }
 
 function selectInput(ev) {
