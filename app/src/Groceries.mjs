@@ -65,7 +65,7 @@ function configureInputTable() {
     locationInput.addEventListener("focus", deselectAll, false);
 
     let accountCell = inputHeader.insertCell(-1);
-    accountCell.colSpan = 2;
+    accountCell.colSpan = 3;
 
     let accountInput = accountCell.appendChild(document.createElement("input"));
     accountInput.id = "account";
@@ -74,15 +74,79 @@ function configureInputTable() {
     accountInput.value = 'Checking';
     accountInput.addEventListener("focus", deselectAll, false);
 
-    let inputFooter = inputTable.createTFoot().insertRow(-1);
-    let addCell = inputFooter.insertCell(-1);
-    addCell.colSpan = 9;
+    let inputFooter = inputTable.createTFoot();
+    let addRow = inputFooter.insertRow(-1);
+    let addCell = addRow.insertCell(-1);
+    addCell.colSpan = 10;
 
     let addLabel = addCell.appendChild(document.createElement("span"));
     addLabel.textContent = "ADD DEPARTMENT";
 
-    inputTable.tFoot.addEventListener("click", addDepartment, false);
-    inputTable.tFoot.dispatchEvent(new Event('click'));
+    let subtotalRow = inputFooter.insertRow(-1);
+    subtotalRow.className = 'summary';
+
+    let subtotalLabelCell = subtotalRow.insertCell(-1);
+    subtotalLabelCell.colSpan = 8;
+
+    let subtotalLabel = subtotalLabelCell.appendChild(document.createElement('span'));
+    subtotalLabel.textContent = 'SUBTOTAL';
+
+    let subtotalValueCell = subtotalRow.insertCell(-1);
+    subtotalValueCell.className = 'cost';
+    subtotalValueCell.colSpan = 2;
+
+    let subtotalCurrencySymbol = subtotalValueCell.appendChild(document.createElement('span'));
+    subtotalCurrencySymbol.textContent = '$';
+
+    let subtotalValue = subtotalValueCell.appendChild(document.createElement('span'));
+    subtotalValue.id = 'form-subtotal';
+    subtotalValue.name = 'subtotal';
+    subtotalValue.textContent = '0.00';
+
+    let taxRow = inputFooter.insertRow(-1);
+    taxRow.className = 'summary';
+
+    let taxLabelCell = taxRow.insertCell(-1);
+    taxLabelCell.colSpan = 8;
+
+    let taxLabel = taxLabelCell.appendChild(document.createElement('span'));
+    taxLabel.textContent = 'TAX';
+
+    let taxValueCell = taxRow.insertCell(-1);
+    taxValueCell.className = 'cost';
+    taxValueCell.colSpan = 2;
+
+    let taxCurrencySymbol = taxValueCell.appendChild(document.createElement('span'));
+    taxCurrencySymbol.textContent = '$';
+
+    let taxValue = taxValueCell.appendChild(document.createElement('span'));
+    taxValue.id = 'form-tax';
+    taxValue.name = 'tax';
+    taxValue.textContent = '0.00';
+
+    let totalRow = inputFooter.insertRow(-1);
+    totalRow.className = 'summary';
+
+    let totalLabelCell = totalRow.insertCell(-1);
+    totalLabelCell.colSpan = 8;
+
+    let totalLabel = totalLabelCell.appendChild(document.createElement('span'));
+    totalLabel.textContent = 'TOTAL';
+
+    let totalValueCell = totalRow.insertCell(-1);
+    totalValueCell.className = 'cost';
+    totalValueCell.colSpan = 2;
+
+    let totalCurrencySymbol = totalValueCell.appendChild(document.createElement('span'));
+    totalCurrencySymbol.textContent = '$';
+
+    let totalValue = totalValueCell.appendChild(document.createElement('span'));
+    totalValue.id = 'form-total';
+    totalValue.name = 'total';
+    totalValue.textContent = '0.00';
+
+    addRow.addEventListener("click", addDepartment, false);
+    addRow.dispatchEvent(new Event('click'));
 }
 
 function addDepartment(ev) {
@@ -90,7 +154,7 @@ function addDepartment(ev) {
     ev.preventDefault();
 
     let newDept = document.createElement("tbody");
-    inputTable.insertBefore(newDept, ev.currentTarget);
+    inputTable.insertBefore(newDept, inputTable.tFoot);
 
     //  DEPARTMENT ROW
     let deptRow = newDept.insertRow(-1);
@@ -102,7 +166,7 @@ function addDepartment(ev) {
     deptDelLabel.addEventListener("click", deleteDepartment, false);
 
     let deptCell = deptRow.insertCell(-1);
-    deptCell.colSpan = 8;
+    deptCell.colSpan = 9;
 
     let deptLabel = deptCell.appendChild(document.createElement("span"));
     deptLabel.textContent = "DEPARTMENT";
@@ -116,7 +180,7 @@ function addDepartment(ev) {
     addRow.addEventListener("click", addProduct, false);
 
     let addCell = addRow.insertCell(-1);
-    addCell.colSpan = 9;
+    addCell.colSpan = 10;
 
     let addLabel = addCell.appendChild(document.createElement("span"));
     addLabel.textContent = "ADD PRODUCT";
@@ -155,10 +219,12 @@ function addProduct(ev) {
 
     let qtyCell = newProd.insertCell(-1);
     let qtyLabel = qtyCell.appendChild(document.createElement("span"));
+    qtyLabel.className = 'qty';
     qtyLabel.textContent = "QTY";
     qtyLabel.contentEditable = true;
     qtyLabel.addEventListener("focus", selectInput, false);
     qtyLabel.addEventListener("blur", populate.bind(qtyLabel, "QTY"), false);
+    qtyLabel.addEventListener('input', updateExtProductCost);
 
     let unitCell = newProd.insertCell(-1);
     let unitLabel = unitCell.appendChild(document.createElement("span"));
@@ -169,10 +235,12 @@ function addProduct(ev) {
 
     let priceCell = newProd.insertCell(-1);
     let priceLabel = priceCell.appendChild(document.createElement("span"));
+    priceLabel.className = 'price';
     priceLabel.textContent = "PRICE";
     priceLabel.contentEditable = true;
     priceLabel.addEventListener("focus", selectInput, false);
     priceLabel.addEventListener("blur", populate.bind(priceLabel, "PRICE"), false);
+    priceLabel.addEventListener('input', updateExtProductCost);
 
     let codeCell = newProd.insertCell(-1);
     let codeLabel = codeCell.appendChild(document.createElement("span"));
@@ -183,10 +251,12 @@ function addProduct(ev) {
 
     let taxCell = newProd.insertCell(-1);
     let taxLabel = taxCell.appendChild(document.createElement("span"));
+    taxLabel.className = 'taxed';
     taxLabel.textContent = "TAXED";
     taxLabel.contentEditable = true;
     taxLabel.addEventListener("focus", selectInput, false);
     taxLabel.addEventListener("blur", populate.bind(taxLabel, "TAXED"), false);
+    taxLabel.addEventListener('input', updateExtProductCost);
 
     let discCell = newProd.insertCell(-1);
     let discLabel = discCell.appendChild(document.createElement("span"));
@@ -194,6 +264,15 @@ function addProduct(ev) {
     discLabel.contentEditable = true;
     discLabel.addEventListener("focus", selectInput, false);
     discLabel.addEventListener("blur", populate.bind(discLabel, "DISCOUNT"), false);
+
+    let extCell = newProd.insertCell(-1);
+    let extCurrencyLabel = extCell.appendChild(document.createElement('span'));
+    extCurrencyLabel.textContent = '$';
+
+    let extLabel = extCell.appendChild(document.createElement("span"));
+    extLabel.className = 'ext';
+    extLabel.textContent = '-.--';
+    extLabel.addEventListener('input', updateTotalCost);
 
     newProd.addEventListener('keypress', addRowsOnEnter);
 
@@ -207,7 +286,7 @@ function addRowsOnEnter(ev) {
 
         if(ev.shiftKey) {
             //  emulate a click on the 'ADD DEPARTMENT' row
-            inputTable.tFoot.dispatchEvent(new Event('click'));
+            inputTable.tFoot.rows[0].dispatchEvent(new Event('click'));
         }
         else {
             //  emulate a click on the 'ADD PRODUCT' row in the current <tbody>
@@ -215,6 +294,46 @@ function addRowsOnEnter(ev) {
             tbody.rows[tbody.rows.length - 1].dispatchEvent(new Event('click'));
         }
     }
+}
+
+function updateExtProductCost(ev) {
+    let prodRow = ev.target.closest('tr');
+    let qty = Number(prodRow.querySelector('span.qty').textContent);
+    let price = Number(prodRow.querySelector('span.price').textContent);
+    let taxed = prodRow.querySelector('span.taxed').textContent === 'Y';
+
+    if(isNaN(qty) || isNaN(price)) {
+        prodRow.querySelector('span.ext').textContent = '-.--';
+        return;
+    }
+
+    let ext = qty * price;
+    if(taxed) {
+        ext *= 1.08;
+    }
+    ext = Math.round(ext * 100).toFixed(0);
+    prodRow.querySelector('span.ext').textContent = `${ext.substring(0, ext.length - 2)}.${ext.substring(ext.length - 2)}`;
+
+    updateTotalCost();
+}
+function updateTotalCost(ev) {
+
+    let total = 0;
+    for(let tbody of inputTable.querySelectorAll('tbody')) {
+        for(let row of tbody.rows) {
+            let extLabel = row.querySelector('span.ext');
+            if(extLabel === null) {
+                continue;
+            }
+            let ext = Number(extLabel.textContent.replace('$', ''));
+            if(!isNaN(ext)) {
+                total += ext;
+            }
+        }
+    }
+
+    total = Math.round(total * 100).toFixed(0);
+    inputTable.querySelector('#form-total').textContent = `${total.substring(0, total.length - 2)}.${total.substring(total.length - 2)}`;
 }
 
 function selectInput(ev) {
