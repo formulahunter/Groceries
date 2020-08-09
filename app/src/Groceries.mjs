@@ -82,6 +82,66 @@ function configureInputTable() {
     let addLabel = addCell.appendChild(document.createElement("span"));
     addLabel.textContent = "ADD DEPARTMENT";
 
+    let subtotalRow = inputFooter.insertRow(-1);
+    subtotalRow.className = 'summary';
+
+    let subtotalLabelCell = subtotalRow.insertCell(-1);
+    subtotalLabelCell.colSpan = 8;
+
+    let subtotalLabel = subtotalLabelCell.appendChild(document.createElement('span'));
+    subtotalLabel.textContent = 'SUBTOTAL';
+
+    let subtotalValueCell = subtotalRow.insertCell(-1);
+    subtotalValueCell.className = 'cost';
+
+    let subtotalCurrencySymbol = subtotalValueCell.appendChild(document.createElement('span'));
+    subtotalCurrencySymbol.textContent = '$';
+
+    let subtotalValue = subtotalValueCell.appendChild(document.createElement('span'));
+    subtotalValue.id = 'form-subtotal';
+    subtotalValue.name = 'subtotal';
+    subtotalValue.textContent = '0.00';
+
+    let taxRow = inputFooter.insertRow(-1);
+    taxRow.className = 'summary';
+
+    let taxLabelCell = taxRow.insertCell(-1);
+    taxLabelCell.colSpan = 8;
+
+    let taxLabel = taxLabelCell.appendChild(document.createElement('span'));
+    taxLabel.textContent = 'TAX';
+
+    let taxValueCell = taxRow.insertCell(-1);
+    taxValueCell.className = 'cost';
+
+    let taxCurrencySymbol = taxValueCell.appendChild(document.createElement('span'));
+    taxCurrencySymbol.textContent = '$';
+
+    let taxValue = taxValueCell.appendChild(document.createElement('span'));
+    taxValue.id = 'form-tax';
+    taxValue.name = 'tax';
+    taxValue.textContent = '0.00';
+
+    let totalRow = inputFooter.insertRow(-1);
+    totalRow.className = 'summary';
+
+    let totalLabelCell = totalRow.insertCell(-1);
+    totalLabelCell.colSpan = 8;
+
+    let totalLabel = totalLabelCell.appendChild(document.createElement('span'));
+    totalLabel.textContent = 'TOTAL';
+
+    let totalValueCell = totalRow.insertCell(-1);
+    totalValueCell.className = 'cost';
+
+    let totalCurrencySymbol = totalValueCell.appendChild(document.createElement('span'));
+    totalCurrencySymbol.textContent = '$';
+
+    let totalValue = totalValueCell.appendChild(document.createElement('span'));
+    totalValue.id = 'form-total';
+    totalValue.name = 'total';
+    totalValue.textContent = '0.00';
+
     addRow.addEventListener("click", addDepartment, false);
     addRow.dispatchEvent(new Event('click'));
 }
