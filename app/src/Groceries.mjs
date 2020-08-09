@@ -65,7 +65,7 @@ function configureInputTable() {
     locationInput.addEventListener("focus", deselectAll, false);
 
     let accountCell = inputHeader.insertCell(-1);
-    accountCell.colSpan = 2;
+    accountCell.colSpan = 3;
 
     let accountInput = accountCell.appendChild(document.createElement("input"));
     accountInput.id = "account";
@@ -77,7 +77,7 @@ function configureInputTable() {
     let inputFooter = inputTable.createTFoot();
     let addRow = inputFooter.insertRow(-1);
     let addCell = addRow.insertCell(-1);
-    addCell.colSpan = 9;
+    addCell.colSpan = 10;
 
     let addLabel = addCell.appendChild(document.createElement("span"));
     addLabel.textContent = "ADD DEPARTMENT";
@@ -93,6 +93,7 @@ function configureInputTable() {
 
     let subtotalValueCell = subtotalRow.insertCell(-1);
     subtotalValueCell.className = 'cost';
+    subtotalValueCell.colSpan = 2;
 
     let subtotalCurrencySymbol = subtotalValueCell.appendChild(document.createElement('span'));
     subtotalCurrencySymbol.textContent = '$';
@@ -113,6 +114,7 @@ function configureInputTable() {
 
     let taxValueCell = taxRow.insertCell(-1);
     taxValueCell.className = 'cost';
+    taxValueCell.colSpan = 2;
 
     let taxCurrencySymbol = taxValueCell.appendChild(document.createElement('span'));
     taxCurrencySymbol.textContent = '$';
@@ -133,6 +135,7 @@ function configureInputTable() {
 
     let totalValueCell = totalRow.insertCell(-1);
     totalValueCell.className = 'cost';
+    totalValueCell.colSpan = 2;
 
     let totalCurrencySymbol = totalValueCell.appendChild(document.createElement('span'));
     totalCurrencySymbol.textContent = '$';
@@ -163,7 +166,7 @@ function addDepartment(ev) {
     deptDelLabel.addEventListener("click", deleteDepartment, false);
 
     let deptCell = deptRow.insertCell(-1);
-    deptCell.colSpan = 8;
+    deptCell.colSpan = 9;
 
     let deptLabel = deptCell.appendChild(document.createElement("span"));
     deptLabel.textContent = "DEPARTMENT";
@@ -177,7 +180,7 @@ function addDepartment(ev) {
     addRow.addEventListener("click", addProduct, false);
 
     let addCell = addRow.insertCell(-1);
-    addCell.colSpan = 9;
+    addCell.colSpan = 10;
 
     let addLabel = addCell.appendChild(document.createElement("span"));
     addLabel.textContent = "ADD PRODUCT";
@@ -255,6 +258,11 @@ function addProduct(ev) {
     discLabel.contentEditable = true;
     discLabel.addEventListener("focus", selectInput, false);
     discLabel.addEventListener("blur", populate.bind(discLabel, "DISCOUNT"), false);
+
+    let extCell = newProd.insertCell(-1);
+    let extLabel = extCell.appendChild(document.createElement("span"));
+    extLabel.name = 'EXT';
+    extLabel.textContent = "EXT";
 
     newProd.addEventListener('keypress', addRowsOnEnter);
 
