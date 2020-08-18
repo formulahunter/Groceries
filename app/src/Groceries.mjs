@@ -204,7 +204,7 @@ function addProduct(ev) {
 
     let skuCell = newProd.insertCell(-1);
     let skuLabel = skuCell.appendChild(document.createElement("span"));
-    skuLabel.textContent = "SKU";
+    // skuLabel.textContent = "SKU";
     skuLabel.contentEditable = true;
     skuLabel.addEventListener("focus", selectInput, false);
     // skuLabel.addEventListener("blur", populate.bind(skuLabel, "SKU"), false);
@@ -276,7 +276,7 @@ function addProduct(ev) {
 
     newProd.addEventListener('keypress', addRowsOnEnter);
 
-    skuLabel.focus();
+    descLabel.focus();
 }
 
 function addRowsOnEnter(ev) {
