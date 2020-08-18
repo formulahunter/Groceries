@@ -543,6 +543,11 @@ function populateHistory(data) {
  * @returns {Promise<{bytesWritten: Number}>}
  */
 async function saveList(receipt) {
+
+    if(!confirm('Save receipt as entered?')) {
+        return;
+    }
+
     // console.log('saving receipt');
     if(receipt === undefined) {
         receipt = parseInput();
