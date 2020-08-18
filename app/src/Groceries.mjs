@@ -601,7 +601,7 @@ function parseInput() {
                 sku: prodRow.cells[1].children[0].textContent,
                 desc: prodRow.cells[2].children[0].textContent,
                 qty: Number(prodRow.cells[3].children[0].textContent),
-                unit: prodRow.cells[4].children[0].textContent,
+                unit: prodRow.cells[4].children[0].textContent.toLowerCase(),
                 price: Number(prodRow.cells[5].children[0].textContent),
                 code: prodRow.cells[6].children[0].textContent,
                 tax: prodRow.cells[7].children[0].textContent,
