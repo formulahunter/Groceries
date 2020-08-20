@@ -14,6 +14,10 @@ const routes = {
     groceries: express.Router()
 };
 
+//  the data file directory
+const DATA_DIR = path.join(__dirname, 'app', 'data');
+const FILE_PATH = path.join(DATA_DIR, 'groceries.json');
+
 //  serve static files from /node_modules
 routes.node_modules.get('/', (req, res) => {
     express.static(path.join(__dirname, 'node_modules'));
@@ -27,14 +31,11 @@ routes.groceries.get('/', (req, res) => {
 //  return json data file (presently receipts.json) for GET request to /groceries/data
 routes.groceries.get('/data', (req, res) => {
     console.log('serving groceries data file');
-    res.sendFile('receipts.json', {root: path.join(__dirname, 'app', 'data')});
+    res.sendFile('groceries.json', {root: DATA_DIR});
 });
 
 //  insert a body-parsing middleware function since all remaining methods carry payload
 routes.groceries.use(express.json());
-
-//  the data file directory
-const DATA_DIR = path.join(__dirname, 'app', 'data');
 
 //  create/update a receipt record
 routes.groceries.put('/receipt', async (req, res) => {
@@ -42,26 +43,23 @@ routes.groceries.put('/receipt', async (req, res) => {
     try {
         //  get json object from request body
         const record = req.body; //  thanks to express.json()
-        console.log(JSON.stringify(record));
 
         //  load json data file
-        const filePath = path.join(DATA_DIR, 'receipts.json');
-        const data = await parseJsonFile(filePath);
+        const data = await parseJsonFile(FILE_PATH);
 
         //  note whether a matching record already exists
         //  if so, save it in the 'last_overwrite.json' file
-        const overwrite = data.receipts.findIndex(record => record.date === record.date);
-        console.log(overwrite);
+        const overwrite = data.receipts.findIndex(el => el.date === record.date);
         if (overwrite < 0) {
             data.receipts.unshift(record);
             data.receipts.sort(sortReceipts);
         } else {
             const oldRecord = data.receipts.splice(overwrite, 1, record)[0];
-            await writeJsonFile(path.join(DATA_DIR, 'last_overwrite.json'), oldRecord);
+            await writeJsonFile(path.join(DATA_DIR, 'deleted_receipt.json'), oldRecord);
         }
 
         //  write new data to file
-        const content = await writeJsonFile(filePath, data);
+        const content = await writeJsonFile(FILE_PATH, data);
 
         //  compute hash digest of new file contents
         const hash = crypto.createHash('sha256');
