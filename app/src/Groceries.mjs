@@ -464,7 +464,7 @@ function deleteProduct(ev) {
 
 async function fetchData() {
 
-    let res = await fetch('data/receipts.json', {
+    let res = await fetch('groceries/data', {
         method: 'GET',
         headers: {
             'Accept': 'application/json'
@@ -554,9 +554,9 @@ async function saveList(receipt) {
     }
     // console.log('saving receipt: %o', receipt);
 
-    let response = await fetch('saveReceipt', {
+    let response = await fetch('groceries/receipt', {
         port: 8055,
-        method: 'POST',
+        method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -564,7 +564,7 @@ async function saveList(receipt) {
         body: JSON.stringify(receipt)
     });
     let result = await response.json();
-    if(!result.bytesWritten) {
+    if(!result.hash) {
         console.debug('server response: %o', response);
         console.debug('json result: %o', result);
         throw new Error('error saving receipt: invalid response received from server');

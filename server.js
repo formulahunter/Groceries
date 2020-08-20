@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const crypto = require('crypto');
 const fs = require('fs/promises');
 const path = require('path');
 
@@ -8,78 +9,132 @@ const port = 8055;
 
 const server = express();
 
-//  designated landing pages
-const pages = /\/?(Groceries|Meals|Recipes)$/i;
+const routes = {
+    node_modules: express.Router(),
+    groceries: express.Router()
+};
 
-//  parse POST request bodies and process as new data to be saved
-server.post('/saveReceipt',
-    bodyParser.urlencoded({ extended: false }),
-    bodyParser.json(),
-    async (req, res, next) => {
-        // console.log(`POST request for: ${path.join(__dirname, 'app/src', req.url)}`);
-        // console.log(`request body: ${JSON.stringify(req.body, null, ' ')}`);
-        let result = await saveNewReceipt(req, res, next);
-        if(result === 'internal_error') {
-            res.sendStatus(500);
-            return;
-        }
-        res.send({bytesWritten: result.bytesWritten});
-    }
-);
-server.use((req, res, next) => {
-    //  serve landing pages from app/
-    if(req.path.search(pages) >= 0) {
-        res.sendFile(`${req.path}.html`, {root: path.join(__dirname, 'app')});
-        return;
-    }
-    next();
+//  serve static files from /node_modules
+routes.node_modules.get('/', (req, res) => {
+    express.static(path.join(__dirname, 'node_modules'));
 });
-//  check request for node package
-server.use('/node_modules',
-    //  serve static files from node_modules/
-    express.static(path.join(__dirname, 'node_modules')));
+
+//  return groceries landing page for GET request to top-level '/groceries' dir
+routes.groceries.get('/', (req, res) => {
+    console.log('serving groceries landing page');
+    res.sendFile('Groceries.html', {root: path.join(__dirname, 'app')});
+});
+//  return json data file (presently receipts.json) for GET request to /groceries/data
+routes.groceries.get('/data', (req, res) => {
+    console.log('serving groceries data file');
+    res.sendFile('receipts.json', {root: path.join(__dirname, 'app', 'data')});
+});
+
+//  insert a body-parsing middleware function since all remaining methods carry payload
+routes.groceries.use(express.json());
+
+//  the data file directory
+const DATA_DIR = path.join(__dirname, 'app', 'data');
+
+//  create/update a receipt record
+routes.groceries.put('/receipt', async (req, res) => {
+
+    try {
+        //  get json object from request body
+        const record = req.body; //  thanks to express.json()
+        console.log(JSON.stringify(record));
+
+        //  load json data file
+        const filePath = path.join(DATA_DIR, 'receipts.json');
+        const data = await parseJsonFile(filePath);
+
+        //  note whether a matching record already exists
+        //  if so, save it in the 'last_overwrite.json' file
+        const overwrite = data.receipts.findIndex(record => record.date === record.date);
+        console.log(overwrite);
+        if (overwrite < 0) {
+            data.receipts.unshift(record);
+            data.receipts.sort(sortReceipts);
+        } else {
+            const oldRecord = data.receipts.splice(overwrite, 1, record)[0];
+            await writeJsonFile(path.join(DATA_DIR, 'last_overwrite.json'), oldRecord);
+        }
+
+        //  write new data to file
+        const content = await writeJsonFile(filePath, data);
+
+        //  compute hash digest of new file contents
+        const hash = crypto.createHash('sha256');
+        hash.update(content);
+        const digest = hash.digest('hex');
+
+        //  configure & send the response
+        //  201: "CREATED" if new record created
+        //  200: "OK" if existing record overwritten
+        res.status(overwrite < 0 ? 201 : 200);
+        res.json({hash: digest});
+    }
+    catch(er) {
+        console.log(`error saving new receipt: ${er.toString()}`);
+        console.log(er.stack);
+        res.status(500).end();
+    }
+});
+//  create/update a product record
+routes.groceries.put('/product', (req, res) => {
+
+});
+//  create/update a department record
+routes.groceries.put('/department', (req, res) => {
+
+});
+//  create/update a account record
+routes.groceries.put('/account', (req, res) => {
+
+});
+//  create/update a location record
+routes.groceries.put('/location', (req, res) => {
+
+});
+
+server.use('/node_modules', routes.node_modules);
+server.use('/groceries', routes.groceries);
+
+
+async function parseJsonFile(absolutePath) {
+    try {
+        return JSON.parse(await fs.readFile(absolutePath, 'utf8'));
+    }
+    catch(er) {
+        er.message = `cannot parse json data file at: ${absolutePath}\n${er.message}`;
+        throw er;
+    }
+}
+async function writeJsonFile(absolutePath, content) {
+    try {
+        if(typeof content !== 'string') {
+            content = JSON.stringify(content);
+        }
+
+        await fs.writeFile(absolutePath, content, 'utf8');
+        return content;
+    }
+    catch(er) {
+        er.message = `cannot write json data file at: ${absolutePath}\n${er.message}`;
+        throw er;
+    }
+}
+
+function sortReceipts(a, b) {
+    return new Date(b.date) - new Date(a.date);
+}
+
+
+//  serve static files from app/
 server.use(
-    //  serve static files from app/
     express.static(path.join(__dirname, 'app'))
 );
 
 server.listen(port, host, () => {
     console.log(`serving files on ${host}:${port}`);
 });
-
-
-
-async function saveNewReceipt(req, res, next) {
-    let dataFile = null;
-    let data = null;
-    try {
-        dataFile = await fs.open('./app/data/receipts.json', 'r+');
-        data = JSON.parse(await dataFile.readFile('utf-8'));
-        data.receipts.push(req.body);
-        data.receipts.sort((a, b) => {
-            return new Date(b.date) - new Date(a.date)
-        });
-    }
-    catch(er) {
-        console.error(`error reading data file: ${er.toString()}`);
-        if(dataFile !== null) {
-            dataFile.close();
-        }
-        return 'internal_error';
-    }
-
-    let jstr = JSON.stringify(data, null, '  ');
-    let result;
-    try {
-        result = dataFile.write(jstr, 0, 'utf-8');
-    }
-    catch(er) {
-        console.error(`error writing data file: ${er.toString()}`);
-        return 'internal_error';
-    }
-    finally {
-        dataFile.close();
-    }
-
-    return result;
-}
