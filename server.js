@@ -79,20 +79,168 @@ routes.groceries.put('/receipt', async (req, res) => {
     }
 });
 //  create/update a product record
-routes.groceries.put('/product', (req, res) => {
+routes.groceries.put('/product', async (req, res) => {
 
+    try {
+        //  get json object from request body
+        const record = req.body; //  thanks to express.json()
+
+        //  load json data file
+        const data = await parseJsonFile(FILE_PATH);
+
+        //  note whether a matching record already exists
+        //  if so, save it in the 'last_overwrite.json' file
+        const overwrite = data.products.findIndex(el => el.name === record.name);
+        if (overwrite < 0) {
+            data.products.unshift(record);
+            data.products.sort(sortReceipts);
+        } else {
+            const oldRecord = data.products.splice(overwrite, 1, record)[0];
+            await writeJsonFile(path.join(DATA_DIR, 'deleted_product.json'), oldRecord);
+        }
+
+        //  write new data to file
+        const content = await writeJsonFile(FILE_PATH, data);
+
+        //  compute hash digest of new file contents
+        const hash = crypto.createHash('sha256');
+        hash.update(content);
+        const digest = hash.digest('hex');
+
+        //  configure & send the response
+        //  201: "CREATED" if new record created
+        //  200: "OK" if existing record overwritten
+        res.status(overwrite < 0 ? 201 : 200);
+        res.json({hash: digest});
+    }
+    catch(er) {
+        console.log(`error saving new product: ${er.toString()}`);
+        console.log(er.stack);
+        res.status(500).end();
+    }
 });
 //  create/update a department record
-routes.groceries.put('/department', (req, res) => {
+routes.groceries.put('/department', async (req, res) => {
 
+    try {
+        //  get json object from request body
+        const record = req.body; //  thanks to express.json()
+
+        //  load json data file
+        const data = await parseJsonFile(FILE_PATH);
+
+        //  note whether a matching record already exists
+        //  if so, save it in the 'last_overwrite.json' file
+        const overwrite = data.departments.findIndex(el => el.name === record.name);
+        if (overwrite < 0) {
+            data.departments.unshift(record);
+            data.departments.sort(sortReceipts);
+        } else {
+            const oldRecord = data.departments.splice(overwrite, 1, record)[0];
+            await writeJsonFile(path.join(DATA_DIR, 'deleted_department.json'), oldRecord);
+        }
+
+        //  write new data to file
+        const content = await writeJsonFile(FILE_PATH, data);
+
+        //  compute hash digest of new file contents
+        const hash = crypto.createHash('sha256');
+        hash.update(content);
+        const digest = hash.digest('hex');
+
+        //  configure & send the response
+        //  201: "CREATED" if new record created
+        //  200: "OK" if existing record overwritten
+        res.status(overwrite < 0 ? 201 : 200);
+        res.json({hash: digest});
+    }
+    catch(er) {
+        console.log(`error saving new department: ${er.toString()}`);
+        console.log(er.stack);
+        res.status(500).end();
+    }
 });
 //  create/update a account record
-routes.groceries.put('/account', (req, res) => {
+routes.groceries.put('/account', async (req, res) => {
 
+    try {
+        //  get json object from request body
+        const record = req.body; //  thanks to express.json()
+
+        //  load json data file
+        const data = await parseJsonFile(FILE_PATH);
+
+        //  note whether a matching record already exists
+        //  if so, save it in the 'last_overwrite.json' file
+        const overwrite = data.accounts.findIndex(el => el.name === record.name);
+        if (overwrite < 0) {
+            data.accounts.unshift(record);
+            data.accounts.sort(sortReceipts);
+        } else {
+            const oldRecord = data.accounts.splice(overwrite, 1, record)[0];
+            await writeJsonFile(path.join(DATA_DIR, 'deleted_account.json'), oldRecord);
+        }
+
+        //  write new data to file
+        const content = await writeJsonFile(FILE_PATH, data);
+
+        //  compute hash digest of new file contents
+        const hash = crypto.createHash('sha256');
+        hash.update(content);
+        const digest = hash.digest('hex');
+
+        //  configure & send the response
+        //  201: "CREATED" if new record created
+        //  200: "OK" if existing record overwritten
+        res.status(overwrite < 0 ? 201 : 200);
+        res.json({hash: digest});
+    }
+    catch(er) {
+        console.log(`error saving new account: ${er.toString()}`);
+        console.log(er.stack);
+        res.status(500).end();
+    }
 });
 //  create/update a location record
-routes.groceries.put('/location', (req, res) => {
+routes.groceries.put('/location', async (req, res) => {
 
+    try {
+        //  get json object from request body
+        const record = req.body; //  thanks to express.json()
+
+        //  load json data file
+        const data = await parseJsonFile(FILE_PATH);
+
+        //  note whether a matching record already exists
+        //  if so, save it in the 'last_overwrite.json' file
+        const overwrite = data.locations.findIndex(el => el.name === record.name);
+        if (overwrite < 0) {
+            data.locations.unshift(record);
+            data.locations.sort(sortReceipts);
+        } else {
+            const oldRecord = data.locations.splice(overwrite, 1, record)[0];
+            await writeJsonFile(path.join(DATA_DIR, 'deleted_location.json'), oldRecord);
+        }
+
+        //  write new data to file
+        const content = await writeJsonFile(FILE_PATH, data);
+
+        //  compute hash digest of new file contents
+        const hash = crypto.createHash('sha256');
+        hash.update(content);
+        const digest = hash.digest('hex');
+
+        //  configure & send the response
+        //  201: "CREATED" if new record created
+        //  200: "OK" if existing record overwritten
+        res.status(overwrite < 0 ? 201 : 200);
+        res.json({hash: digest});
+    }
+    catch(er) {
+        console.log(`error saving new location: ${er.toString()}`);
+        console.log(er.stack);
+        res.status(500).end();
+    }
 });
 
 server.use('/node_modules', routes.node_modules);
