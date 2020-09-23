@@ -11,7 +11,8 @@ const server = express();
 
 const routes = {
     node_modules: express.Router(),
-    groceries: express.Router()
+    groceries: express.Router(),
+    meals: express.Router()
 };
 
 //  the data file directory
@@ -243,8 +244,15 @@ routes.groceries.put('/location', async (req, res) => {
     }
 });
 
+//  return groceries landing page for GET request to top-level '/groceries' dir
+routes.meals.get('/', (req, res) => {
+    console.log('serving meals landing page');
+    res.sendFile('Meals.html', {root: path.join(__dirname, 'app')});
+});
+
 server.use('/node_modules', routes.node_modules);
 server.use('/groceries', routes.groceries);
+server.use('/meals', routes.meals);
 
 
 async function parseJsonFile(absolutePath) {
