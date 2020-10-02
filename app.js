@@ -1,13 +1,10 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const fs = require('fs/promises');
 const path = require('path');
 
-const host = '127.0.0.1';
-const port = 8055;
 
-const server = express();
+const app = express();
 
 const routes = {
     node_modules: express.Router(),
@@ -243,8 +240,8 @@ routes.groceries.put('/location', async (req, res) => {
     }
 });
 
-server.use('/node_modules', routes.node_modules);
-server.use('/groceries', routes.groceries);
+app.use('/node_modules', routes.node_modules);
+app.use('/groceries', routes.groceries);
 
 
 async function parseJsonFile(absolutePath) {
@@ -276,11 +273,5 @@ function sortReceipts(a, b) {
 }
 
 
-//  serve static files from app/
-server.use(
-    express.static(path.join(__dirname, 'app'))
-);
 
-server.listen(port, host, () => {
-    console.log(`serving files on ${host}:${port}`);
-});
+module.exports = app;
