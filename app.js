@@ -30,6 +30,12 @@ routes.groceries.get('/data', (req, res) => {
     console.log('serving groceries data file');
     res.sendFile('groceries.json', {root: DATA_DIR});
 });
+//  route all other /groceries requests to /src directory
+routes.groceries.get('/*', express.static('/srv/groceries/app/src', {
+    dotfiles: 'ignore',
+    index: false,           //  disable directory index
+    lastModified: false
+}));
 
 //  insert a body-parsing middleware function since all remaining methods carry payload
 routes.groceries.use(express.json());
@@ -241,7 +247,7 @@ routes.groceries.put('/location', async (req, res) => {
 });
 
 app.use('/node_modules', routes.node_modules);
-app.use('/groceries', routes.groceries);
+app.use('/', routes.groceries);
 
 
 async function parseJsonFile(absolutePath) {
