@@ -2,10 +2,10 @@
   "name": "groceries",
   "version": "0.0.1",
   "description": "trivial project for entering grocery receipt data",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "devstart": "nodemon server.js"
+    "devstart": "nodemon app.js"
   },
   "author": "",
   "license": "ISC",
